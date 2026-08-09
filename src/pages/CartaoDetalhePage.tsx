@@ -316,20 +316,28 @@ function CompraParceladaCard({
           <p className="text-sm text-muted-foreground">
             {compra.quantidade_parcelas}x de {formatarMoeda(compra.valor_parcela, moedaPadrao)} · total {formatarMoeda(compra.valor_total, moedaPadrao)}
           </p>
-          {compra.pessoas > 1 && (
-            <p className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Users className="size-3" /> Dividido entre {compra.pessoas} pessoas — sua parte já calculada acima
-            </p>
-          )}
-          {resumo && (
-            <p className="text-sm text-muted-foreground">
-              {resumo.pagas}/{resumo.total} parcelas pagas · Sua parte — pago: {formatarMoeda(resumo.valorPago, moedaPadrao)}, falta: {formatarMoeda(resumo.valorTotal - resumo.valorPago, moedaPadrao)}
-            </p>
-          )}
-          {resumo && compra.pessoas > 1 && (
-            <p className="text-xs text-muted-foreground">
-              Fatura toda (÷{compra.pessoas}) — pago: {formatarMoeda(resumo.valorPago * compra.pessoas, moedaPadrao)}, falta: {formatarMoeda((resumo.valorTotal - resumo.valorPago) * compra.pessoas, moedaPadrao)}
-            </p>
+          {compra.pessoas > 1 ? (
+            <div className="mt-2 space-y-1.5 text-sm text-muted-foreground">
+              <p className="flex items-center gap-1">
+                <Users className="size-3.5" /> Dividido entre {compra.pessoas} pessoas
+              </p>
+              {resumo && (
+                <>
+                  <p>
+                    Parcelas pagas {resumo.pagas}/{resumo.total} · Sua parte — pago: {formatarMoeda(resumo.valorPago, moedaPadrao)}, falta: {formatarMoeda(resumo.valorTotal - resumo.valorPago, moedaPadrao)}
+                  </p>
+                  <p>
+                    Fatura total — pago: {formatarMoeda(resumo.valorPago * compra.pessoas, moedaPadrao)}, falta: {formatarMoeda((resumo.valorTotal - resumo.valorPago) * compra.pessoas, moedaPadrao)}
+                  </p>
+                </>
+              )}
+            </div>
+          ) : (
+            resumo && (
+              <p className="text-sm text-muted-foreground">
+                {resumo.pagas}/{resumo.total} parcelas pagas · Sua parte — pago: {formatarMoeda(resumo.valorPago, moedaPadrao)}, falta: {formatarMoeda(resumo.valorTotal - resumo.valorPago, moedaPadrao)}
+              </p>
+            )
           )}
         </div>
         <div className="flex items-center gap-1">
