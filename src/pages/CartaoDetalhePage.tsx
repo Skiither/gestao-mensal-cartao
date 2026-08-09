@@ -272,7 +272,6 @@ function CompraParceladaCard({
           <CardTitle className="text-base">{compra.descricao}</CardTitle>
           <p className="text-sm text-muted-foreground">
             {compra.quantidade_parcelas}x de {formatarMoeda(compra.valor_parcela, moedaPadrao)} · total {formatarMoeda(compra.valor_total, moedaPadrao)}
-            {" · a partir de "}{formatarCompetencia(compra.mes_inicial)}
           </p>
           {compra.pessoas > 1 && (
             <p className="flex items-center gap-1 text-xs text-muted-foreground">
