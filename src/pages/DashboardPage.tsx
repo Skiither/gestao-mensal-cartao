@@ -18,6 +18,7 @@ const TONS = {
   primary: { valor: "text-primary", chip: "bg-primary/10 text-primary" },
   warning: { valor: "text-warning", chip: "bg-warning/15 text-warning" },
   destructive: { valor: "text-destructive", chip: "bg-destructive/10 text-destructive" },
+  info: { valor: "text-info", chip: "bg-info/15 text-info" },
 } as const
 type Tom = keyof typeof TONS
 
@@ -42,7 +43,6 @@ export function DashboardPage() {
   const faltaPagar = faltaPagarCompromissos + faltaPagarParcelas
 
   const saldo = totalReceitas - totalComprometido
-  const tomSaldo: Tom = saldo >= 0 ? "success" : "destructive"
 
   const moedasPatrimonio = patrimonioHistorico ? moedasNoHistorico(patrimonioHistorico) : []
   const guardadoPorMoeda = moedasPatrimonio.map((m) => ({
@@ -73,7 +73,7 @@ export function DashboardPage() {
           valor={totalComprometido}
           moeda={moedaPadrao}
           icone={Receipt}
-          tom="primary"
+          tom="warning"
           loading={carregando}
           subtitulo={`${formatarMoeda(totalCompromissos, moedaPadrao)} compromissos + ${formatarMoeda(totalParcelas, moedaPadrao)} parcelas`}
         />
@@ -82,28 +82,17 @@ export function DashboardPage() {
           valor={faltaPagar}
           moeda={moedaPadrao}
           icone={AlertCircle}
-          tom={faltaPagar > 0 ? "warning" : "success"}
+          tom="destructive"
           loading={carregando}
         />
-        <Card className={cn("border-t-4", tomSaldo === "success" ? "border-t-success" : "border-t-destructive")}>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className={cn("flex size-8 items-center justify-center rounded-lg", TONS[tomSaldo].chip)}>
-                <TrendingUp className="size-4" />
-              </span>
-              Sobra do mês
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {carregando ? (
-              <p className="text-sm text-muted-foreground">Carregando...</p>
-            ) : (
-              <p className={cn("text-2xl font-bold tabular-nums", TONS[tomSaldo].valor)}>
-                {formatarMoeda(saldo, moedaPadrao)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <ResumoCard
+          titulo="Sobra do mês"
+          valor={saldo}
+          moeda={moedaPadrao}
+          icone={TrendingUp}
+          tom="info"
+          loading={carregando}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
