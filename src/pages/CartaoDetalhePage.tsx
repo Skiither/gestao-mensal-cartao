@@ -51,6 +51,16 @@ export function CartaoDetalhePage() {
 
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<CompraParcelada | null>(null)
+  const [mostrarQuitadas, setMostrarQuitadas] = useState(false)
+
+  const comprasAtivas = compras?.filter((compra) => {
+    const resumo = resumoPorCompra?.get(compra.id)
+    return !resumo || resumo.pagas < resumo.total
+  })
+  const comprasQuitadas = compras?.filter((compra) => {
+    const resumo = resumoPorCompra?.get(compra.id)
+    return resumo && resumo.total > 0 && resumo.pagas === resumo.total
+  })
 
   const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
@@ -125,7 +135,8 @@ export function CartaoDetalhePage() {
                   {`Disponível: ${formatarMoeda(cartao.limite - (totalPendentePorCartao?.get(cartao.id) ?? 0), moedaPadrao)} · `}
                 </>
               )}
-              Fecha dia {cartao.dia_fechamento}, vence dia {cartao.dia_vencimento}
+              {`Fecha dia ${cartao.dia_fechamento}, vence dia ${cartao.dia_vencimento} · `}
+              {comprasAtivas?.length ?? 0} {comprasAtivas?.length === 1 ? "compra ativa" : "compras ativas"}
             </p>
           )}
         </div>
@@ -234,17 +245,49 @@ export function CartaoDetalhePage() {
       ) : !compras || compras.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nenhuma compra parcelada neste cartão.</p>
       ) : (
-        <div className="space-y-3">
-          {compras.map((compra) => (
-            <CompraParceladaCard
-              key={compra.id}
-              compra={compra}
-              resumo={resumoPorCompra?.get(compra.id)}
-              onEdit={() => openEdit(compra)}
-              onDelete={() => onDelete(compra.id)}
-            />
-          ))}
-        </div>
+        <>
+          {!comprasAtivas || comprasAtivas.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma compra ativa — tudo quitado por aqui.</p>
+          ) : (
+            <div className="space-y-3">
+              {comprasAtivas.map((compra) => (
+                <CompraParceladaCard
+                  key={compra.id}
+                  compra={compra}
+                  resumo={resumoPorCompra?.get(compra.id)}
+                  onEdit={() => openEdit(compra)}
+                  onDelete={() => onDelete(compra.id)}
+                />
+              ))}
+            </div>
+          )}
+
+          {comprasQuitadas && comprasQuitadas.length > 0 && (
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setMostrarQuitadas((v) => !v)}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+              >
+                {mostrarQuitadas ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                {comprasQuitadas.length} {comprasQuitadas.length === 1 ? "compra quitada" : "compras quitadas"}
+              </button>
+              {mostrarQuitadas && (
+                <div className="mt-3 space-y-3">
+                  {comprasQuitadas.map((compra) => (
+                    <CompraParceladaCard
+                      key={compra.id}
+                      compra={compra}
+                      resumo={resumoPorCompra?.get(compra.id)}
+                      onEdit={() => openEdit(compra)}
+                      onDelete={() => onDelete(compra.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

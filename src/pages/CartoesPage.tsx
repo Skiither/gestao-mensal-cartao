@@ -13,7 +13,7 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCartoes, useCreateCartao, useUpdateCartao, useDeleteCartao } from "@/hooks/useCartoes"
-import { useTotalPendentePorCartao } from "@/hooks/useComprasParceladas"
+import { useQuantidadeComprasAtivasPorCartao, useTotalPendentePorCartao } from "@/hooks/useComprasParceladas"
 import { useAuth } from "@/contexts/AuthContext"
 import { formatarMoeda } from "@/lib/format"
 import type { Cartao } from "@/types/database"
@@ -32,6 +32,7 @@ export function CartoesPage() {
   const { moedaPadrao } = useAuth()
   const { data: cartoes, isLoading } = useCartoes()
   const { data: totalPendentePorCartao } = useTotalPendentePorCartao()
+  const { data: quantidadeComprasPorCartao } = useQuantidadeComprasAtivasPorCartao()
   const createMutation = useCreateCartao()
   const updateMutation = useUpdateCartao()
   const deleteMutation = useDeleteCartao()
@@ -206,6 +207,10 @@ export function CartoesPage() {
                     </>
                   )}
                   <p>Fecha dia {cartao.dia_fechamento}, vence dia {cartao.dia_vencimento}</p>
+                  {(() => {
+                    const qtd = quantidadeComprasPorCartao?.get(cartao.id) ?? 0
+                    return <p>{qtd} {qtd === 1 ? "compra ativa" : "compras ativas"}</p>
+                  })()}
                 </CardContent>
               </Card>
             </Link>

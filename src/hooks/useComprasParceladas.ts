@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase"
-import type { CompraParcelada, Parcela } from "@/types/database"
+import type { CompraParcelada, Parcela, Status } from "@/types/database"
 import type { Competencia } from "@/lib/competencia"
 
 const KEY = ["compras_parceladas"]
@@ -153,6 +153,39 @@ export function useResumoParcelasPorCartao(cartaoId: string | undefined) {
         porCompra.set(parcela.compra_parcelada_id, atual)
       }
       return porCompra
+    },
+  })
+}
+
+/** Quantidade de compras parceladas ainda ativas (com alguma parcela pendente) por cartão —
+ * usada para identificar cartões na listagem. Compras já 100% pagas não entram na contagem. */
+export function useQuantidadeComprasAtivasPorCartao() {
+  return useQuery({
+    queryKey: [...KEY, "ativas-por-cartao"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("parcelas")
+        .select("status, compras_parceladas(id, cartao_id)")
+      if (error) throw error
+
+      const porCompra = new Map<string, { cartaoId: string; pagas: number; total: number }>()
+      for (const parcela of data as unknown as {
+        status: Status
+        compras_parceladas: { id: string; cartao_id: string } | null
+      }[]) {
+        const compra = parcela.compras_parceladas
+        if (!compra) continue
+        const atual = porCompra.get(compra.id) ?? { cartaoId: compra.cartao_id, pagas: 0, total: 0 }
+        atual.total += 1
+        if (parcela.status === "pago") atual.pagas += 1
+        porCompra.set(compra.id, atual)
+      }
+
+      const porCartao = new Map<string, number>()
+      for (const { cartaoId, pagas, total } of porCompra.values()) {
+        if (pagas < total) porCartao.set(cartaoId, (porCartao.get(cartaoId) ?? 0) + 1)
+      }
+      return porCartao
     },
   })
 }
