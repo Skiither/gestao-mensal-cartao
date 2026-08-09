@@ -122,6 +122,41 @@ export function useParcelasDaCompetencia(competencia: Competencia) {
   })
 }
 
+export interface ResumoParcelas {
+  pagas: number
+  total: number
+  valorPago: number
+  valorTotal: number
+}
+
+/** Progresso (nº e valor pago/total) de cada compra parcelada de um cartão, numa única consulta. */
+export function useResumoParcelasPorCartao(cartaoId: string | undefined) {
+  return useQuery({
+    queryKey: [...PARCELAS_KEY, "resumo-cartao", cartaoId],
+    enabled: !!cartaoId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("parcelas")
+        .select("compra_parcelada_id, valor, status, compras_parceladas!inner(cartao_id)")
+        .eq("compras_parceladas.cartao_id", cartaoId!)
+      if (error) throw error
+
+      const porCompra = new Map<string, ResumoParcelas>()
+      for (const parcela of data as unknown as { compra_parcelada_id: string; valor: number; status: "pago" | "pendente" }[]) {
+        const atual = porCompra.get(parcela.compra_parcelada_id) ?? { pagas: 0, total: 0, valorPago: 0, valorTotal: 0 }
+        atual.total += 1
+        atual.valorTotal += parcela.valor
+        if (parcela.status === "pago") {
+          atual.pagas += 1
+          atual.valorPago += parcela.valor
+        }
+        porCompra.set(parcela.compra_parcelada_id, atual)
+      }
+      return porCompra
+    },
+  })
+}
+
 /** Soma das parcelas pendentes (todos os meses) por cartão — usada para calcular o limite disponível. */
 export function useTotalPendentePorCartao() {
   return useQuery({

@@ -16,7 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCartao } from "@/hooks/useCartoes"
 import {
   useComprasParceladas, useCreateCompraParcelada, useDeleteCompraParcelada, useMarcarParcelaPaga,
-  useParcelasDaCompra, useTotalPendentePorCartao, useUpdateCompraParcelada,
+  useParcelasDaCompra, useResumoParcelasPorCartao, useTotalPendentePorCartao, useUpdateCompraParcelada,
+  type ResumoParcelas,
 } from "@/hooks/useComprasParceladas"
 import { useCompetencia } from "@/contexts/CompetenciaContext"
 import { useAuth } from "@/contexts/AuthContext"
@@ -43,6 +44,7 @@ export function CartaoDetalhePage() {
   const { data: cartao } = useCartao(id)
   const { data: compras, isLoading } = useComprasParceladas(id)
   const { data: totalPendentePorCartao } = useTotalPendentePorCartao()
+  const { data: resumoPorCompra } = useResumoParcelasPorCartao(id)
   const createMutation = useCreateCompraParcelada()
   const updateMutation = useUpdateCompraParcelada()
   const deleteMutation = useDeleteCompraParcelada()
@@ -237,6 +239,7 @@ export function CartaoDetalhePage() {
             <CompraParceladaCard
               key={compra.id}
               compra={compra}
+              resumo={resumoPorCompra?.get(compra.id)}
               onEdit={() => openEdit(compra)}
               onDelete={() => onDelete(compra.id)}
             />
@@ -248,8 +251,8 @@ export function CartaoDetalhePage() {
 }
 
 function CompraParceladaCard({
-  compra, onEdit, onDelete,
-}: { compra: CompraParcelada; onEdit: () => void; onDelete: () => void }) {
+  compra, resumo, onEdit, onDelete,
+}: { compra: CompraParcelada; resumo: ResumoParcelas | undefined; onEdit: () => void; onDelete: () => void }) {
   const { moedaPadrao } = useAuth()
   const [expandido, setExpandido] = useState(false)
   const { data: parcelas } = useParcelasDaCompra(expandido ? compra.id : undefined)
@@ -274,6 +277,16 @@ function CompraParceladaCard({
           {compra.pessoas > 1 && (
             <p className="flex items-center gap-1 text-xs text-muted-foreground">
               <Users className="size-3" /> Dividido entre {compra.pessoas} pessoas — sua parte já calculada acima
+            </p>
+          )}
+          {resumo && (
+            <p className="text-sm text-muted-foreground">
+              {resumo.pagas}/{resumo.total} parcelas pagas · Sua parte — pago: {formatarMoeda(resumo.valorPago, moedaPadrao)}, falta: {formatarMoeda(resumo.valorTotal - resumo.valorPago, moedaPadrao)}
+            </p>
+          )}
+          {resumo && compra.pessoas > 1 && (
+            <p className="text-xs text-muted-foreground">
+              Fatura toda (÷{compra.pessoas}) — pago: {formatarMoeda(resumo.valorPago * compra.pessoas, moedaPadrao)}, falta: {formatarMoeda((resumo.valorTotal - resumo.valorPago) * compra.pessoas, moedaPadrao)}
             </p>
           )}
         </div>
