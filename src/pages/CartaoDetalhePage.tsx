@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { toast } from "sonner"
-import { ArrowLeft, ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react"
+import { ArrowLeft, ChevronDown, ChevronUp, Pencil, Plus, Trash2, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCartao } from "@/hooks/useCartoes"
 import {
   useComprasParceladas, useCreateCompraParcelada, useDeleteCompraParcelada, useMarcarParcelaPaga,
-  useParcelasDaCompra, useTotalPendentePorCartao,
+  useParcelasDaCompra, useTotalPendentePorCartao, useUpdateCompraParcelada,
 } from "@/hooks/useComprasParceladas"
 import { useCompetencia } from "@/contexts/CompetenciaContext"
 import { useAuth } from "@/contexts/AuthContext"
@@ -30,6 +30,7 @@ const schema = z.object({
   valor_total: z.coerce.number().positive("O valor deve ser maior que zero"),
   quantidade_parcelas: z.coerce.number().int().min(1, "Mínimo de 1 parcela"),
   mes_inicial: z.string().min(1, "Informe o mês inicial"),
+  pessoas: z.coerce.number().int().min(1, "Mínimo de 1 pessoa"),
 })
 
 type FormValues = z.output<typeof schema>
@@ -43,28 +44,56 @@ export function CartaoDetalhePage() {
   const { data: compras, isLoading } = useComprasParceladas(id)
   const { data: totalPendentePorCartao } = useTotalPendentePorCartao()
   const createMutation = useCreateCompraParcelada()
+  const updateMutation = useUpdateCompraParcelada()
   const deleteMutation = useDeleteCompraParcelada()
 
   const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<CompraParcelada | null>(null)
 
   const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { descricao: "", valor_total: 0, quantidade_parcelas: 1, mes_inicial: competencia },
+    defaultValues: { descricao: "", valor_total: 0, quantidade_parcelas: 1, mes_inicial: competencia, pessoas: 1 },
   })
 
+  const valorTotal = form.watch("valor_total")
+  const quantidadeParcelas = form.watch("quantidade_parcelas")
+  const pessoas = form.watch("pessoas")
+  const previaValorParcela =
+    Number(valorTotal) > 0 && Number(quantidadeParcelas) > 0 && Number(pessoas) > 0
+      ? Number(valorTotal) / Number(quantidadeParcelas) / Number(pessoas)
+      : null
+
   function openCreate() {
-    form.reset({ descricao: "", valor_total: 0, quantidade_parcelas: 1, mes_inicial: competencia })
+    setEditing(null)
+    form.reset({ descricao: "", valor_total: 0, quantidade_parcelas: 1, mes_inicial: competencia, pessoas: 1 })
+    setOpen(true)
+  }
+
+  function openEdit(compra: CompraParcelada) {
+    setEditing(compra)
+    form.reset({
+      descricao: compra.descricao,
+      valor_total: compra.valor_total,
+      quantidade_parcelas: compra.quantidade_parcelas,
+      mes_inicial: compra.mes_inicial,
+      pessoas: compra.pessoas,
+    })
     setOpen(true)
   }
 
   async function onSubmit(values: FormValues) {
     if (!id) return
     try {
-      await createMutation.mutateAsync({ ...values, cartao_id: id })
-      toast.success("Compra parcelada criada — parcelas geradas automaticamente")
+      if (editing) {
+        await updateMutation.mutateAsync({ ...values, id: editing.id, cartao_id: id })
+        toast.success("Compra parcelada atualizada — parcelas recalculadas")
+      } else {
+        await createMutation.mutateAsync({ ...values, cartao_id: id })
+        toast.success("Compra parcelada criada — parcelas geradas automaticamente")
+      }
       setOpen(false)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao criar compra parcelada")
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar compra parcelada")
     }
   }
 
@@ -106,7 +135,7 @@ export function CartaoDetalhePage() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Nova compra parcelada</DialogTitle>
+              <DialogTitle>{editing ? "Editar compra parcelada" : "Nova compra parcelada"}</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -164,6 +193,29 @@ export function CartaoDetalhePage() {
                     )}
                   />
                 </div>
+                <FormField
+                  control={form.control}
+                  name="pessoas"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dividir entre quantas pessoas?</FormLabel>
+                      <FormControl>
+                        <Input type="number" min="1" {...field} value={field.value as number} />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground">
+                        1 = a compra é só sua. Acima disso, o valor total é dividido igualmente e cada
+                        parcela reflete apenas a sua parte.
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {previaValorParcela != null && (
+                  <p className="text-sm text-muted-foreground">
+                    Sua parcela: <span className="font-medium text-foreground">{formatarMoeda(previaValorParcela, moedaPadrao)}</span>
+                    {" "}× {Number(quantidadeParcelas)}
+                  </p>
+                )}
                 <DialogFooter>
                   <Button type="submit" disabled={form.formState.isSubmitting}>
                     Salvar
@@ -182,7 +234,12 @@ export function CartaoDetalhePage() {
       ) : (
         <div className="space-y-3">
           {compras.map((compra) => (
-            <CompraParceladaCard key={compra.id} compra={compra} onDelete={() => onDelete(compra.id)} />
+            <CompraParceladaCard
+              key={compra.id}
+              compra={compra}
+              onEdit={() => openEdit(compra)}
+              onDelete={() => onDelete(compra.id)}
+            />
           ))}
         </div>
       )}
@@ -190,7 +247,9 @@ export function CartaoDetalhePage() {
   )
 }
 
-function CompraParceladaCard({ compra, onDelete }: { compra: CompraParcelada; onDelete: () => void }) {
+function CompraParceladaCard({
+  compra, onEdit, onDelete,
+}: { compra: CompraParcelada; onEdit: () => void; onDelete: () => void }) {
   const { moedaPadrao } = useAuth()
   const [expandido, setExpandido] = useState(false)
   const { data: parcelas } = useParcelasDaCompra(expandido ? compra.id : undefined)
@@ -212,8 +271,21 @@ function CompraParceladaCard({ compra, onDelete }: { compra: CompraParcelada; on
             {compra.quantidade_parcelas}x de {formatarMoeda(compra.valor_parcela, moedaPadrao)} · total {formatarMoeda(compra.valor_total, moedaPadrao)}
             {" · a partir de "}{formatarCompetencia(compra.mes_inicial)}
           </p>
+          {compra.pessoas > 1 && (
+            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Users className="size-3" /> Dividido entre {compra.pessoas} pessoas — sua parte já calculada acima
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => { e.stopPropagation(); onEdit() }}
+            aria-label="Editar compra"
+          >
+            <Pencil className="size-4" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"

@@ -58,6 +58,7 @@ create table if not exists compras_parceladas (
   quantidade_parcelas int not null,
   valor_parcela numeric(12,2) not null,
   mes_inicial text not null, -- 'YYYY-MM'
+  pessoas int not null default 1 check (pessoas >= 1), -- divide valor_total/quantidade_parcelas entre N pessoas
   created_at timestamptz default now()
 );
 
@@ -68,7 +69,8 @@ create table if not exists parcelas (
   competencia text not null, -- 'YYYY-MM'
   valor numeric(12,2) not null,
   status text not null default 'pendente' check (status in ('pendente','pago')),
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  unique (compra_parcelada_id, numero_parcela)
 );
 
 create table if not exists metas (
@@ -101,7 +103,9 @@ create index if not exists idx_compras_parceladas_cartao on compras_parceladas(c
 create index if not exists idx_cartoes_user on cartoes(user_id);
 
 -- ----------------------------------------------------------------------------
--- Função + trigger: gerar parcelas automaticamente ao inserir compra_parcelada
+-- Função + trigger: gerar/regenerar parcelas ao inserir ou editar compra_parcelada
+-- No update, faz upsert por numero_parcela (preserva o status 'pago' das parcelas
+-- que continuam existindo) e remove as parcelas que sobrarem se a quantidade caiu.
 -- ----------------------------------------------------------------------------
 
 create or replace function gerar_parcelas_compra()
@@ -113,8 +117,18 @@ as $$
 declare
   i int;
   competencia_ref date;
+  valor_parcela_calc numeric(12,2);
 begin
+  if TG_OP = 'UPDATE'
+     and new.valor_total = old.valor_total
+     and new.quantidade_parcelas = old.quantidade_parcelas
+     and new.mes_inicial = old.mes_inicial
+     and new.pessoas = old.pessoas then
+    return new;
+  end if;
+
   competencia_ref := to_date(new.mes_inicial || '-01', 'YYYY-MM-DD');
+  valor_parcela_calc := round((new.valor_total / new.quantidade_parcelas / new.pessoas)::numeric, 2);
 
   for i in 0 .. (new.quantidade_parcelas - 1) loop
     insert into parcelas (compra_parcelada_id, numero_parcela, competencia, valor, status)
@@ -122,10 +136,16 @@ begin
       new.id,
       i + 1,
       to_char(competencia_ref + (i || ' months')::interval, 'YYYY-MM'),
-      new.valor_parcela,
+      valor_parcela_calc,
       'pendente'
-    );
+    )
+    on conflict (compra_parcelada_id, numero_parcela)
+    do update set competencia = excluded.competencia, valor = excluded.valor;
   end loop;
+
+  delete from parcelas
+  where compra_parcelada_id = new.id
+    and numero_parcela > new.quantidade_parcelas;
 
   return new;
 end;
@@ -134,6 +154,12 @@ $$;
 drop trigger if exists trg_gerar_parcelas on compras_parceladas;
 create trigger trg_gerar_parcelas
   after insert on compras_parceladas
+  for each row
+  execute function gerar_parcelas_compra();
+
+drop trigger if exists trg_atualizar_parcelas on compras_parceladas;
+create trigger trg_atualizar_parcelas
+  after update on compras_parceladas
   for each row
   execute function gerar_parcelas_compra();
 

@@ -12,6 +12,7 @@ export interface CompraParceladaInput {
   valor_total: number
   quantidade_parcelas: number
   mes_inicial: string
+  pessoas: number
 }
 
 export function useComprasParceladas(cartaoId: string | undefined) {
@@ -30,14 +31,36 @@ export function useComprasParceladas(cartaoId: string | undefined) {
   })
 }
 
+function calcularValorParcela(input: Pick<CompraParceladaInput, "valor_total" | "quantidade_parcelas" | "pessoas">) {
+  return Math.round((input.valor_total / input.quantidade_parcelas / input.pessoas) * 100) / 100
+}
+
 /** Cria a compra parcelada. O trigger no banco gera as parcelas automaticamente. */
 export function useCreateCompraParcelada() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (input: CompraParceladaInput) => {
-      const valor_parcela = Math.round((input.valor_total / input.quantidade_parcelas) * 100) / 100
+      const valor_parcela = calcularValorParcela(input)
       const { error } = await supabase.from("compras_parceladas").insert({ ...input, valor_parcela })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: KEY })
+      queryClient.invalidateQueries({ queryKey: PARCELAS_KEY })
+    },
+  })
+}
+
+/** Edita a compra parcelada. O trigger no banco recalcula/regenera as parcelas
+ * (preservando o status 'pago' das que continuam existindo). */
+export function useUpdateCompraParcelada() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, ...input }: CompraParceladaInput & { id: string }) => {
+      const valor_parcela = calcularValorParcela(input)
+      const { error } = await supabase.from("compras_parceladas").update({ ...input, valor_parcela }).eq("id", id)
       if (error) throw error
     },
     onSuccess: () => {

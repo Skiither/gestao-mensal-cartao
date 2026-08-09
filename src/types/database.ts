@@ -56,6 +56,7 @@ export type CompraParcelada = {
   quantidade_parcelas: number
   valor_parcela: number
   mes_inicial: string
+  pessoas: number
   created_at: string
 }
 
@@ -102,7 +103,7 @@ export type Database = {
       receitas: Table<Receita, Partial<Receita> & { nome: string; valor: number; data: string; tipo: TipoReceita; user_id: string }>
       compromissos_financeiros: Table<CompromissoFinanceiro, Partial<CompromissoFinanceiro> & { nome: string; valor: number; vencimento: string; competencia: string; recorrencia: Recorrencia; user_id: string }>
       cartoes: Table<Cartao, Partial<Cartao> & { nome: string; dia_fechamento: number; dia_vencimento: number; user_id: string }>
-      compras_parceladas: Table<CompraParcelada, Partial<CompraParcelada> & { cartao_id: string; descricao: string; valor_total: number; quantidade_parcelas: number; valor_parcela: number; mes_inicial: string }>
+      compras_parceladas: Table<CompraParcelada, Partial<CompraParcelada> & { cartao_id: string; descricao: string; valor_total: number; quantidade_parcelas: number; valor_parcela: number; mes_inicial: string; pessoas: number }>
       parcelas: Table<Parcela, Partial<Parcela> & { compra_parcelada_id: string; numero_parcela: number; competencia: string; valor: number }>
       metas: Table<Meta, Partial<Meta> & { nome: string; valor_desejado: number; user_id: string }>
       patrimonio: Table<Patrimonio, Partial<Patrimonio> & { tipo: TipoPatrimonio; valor: number; moeda: Moeda; user_id: string }>
