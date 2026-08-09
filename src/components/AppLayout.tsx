@@ -23,7 +23,7 @@ const NAV_ITEMS = [
 ]
 
 export function AppLayout() {
-  const { user, signOut, onboardingCompleto } = useAuth()
+  const { user, nomeCompleto, signOut, onboardingCompleto } = useAuth()
 
   if (!onboardingCompleto) {
     return <Navigate to="/onboarding" replace />
@@ -68,11 +68,13 @@ export function AppLayout() {
             <div className="hidden sm:absolute sm:left-1/2 sm:flex sm:-translate-x-1/2">
               <CompetenciaSelector />
             </div>
-            <div className="flex items-center gap-3 sm:gap-2">
+            <div className="flex items-center gap-3 sm:gap-4">
               <span className="sm:hidden">
                 <CompetenciaSelector />
               </span>
-              <span className="hidden text-sm text-muted-foreground sm:inline">{user?.email}</span>
+              <span className="hidden text-sm text-muted-foreground sm:mr-2 sm:inline">
+                {nomeCompleto || user?.email}
+              </span>
               <Button variant="ghost" size="icon" onClick={() => signOut()} aria-label="Sair">
                 <LogOut className="size-4" />
               </Button>
