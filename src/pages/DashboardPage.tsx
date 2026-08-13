@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"
 import { Wallet, Receipt, AlertCircle, PiggyBank, TrendingUp, Target } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -67,6 +68,7 @@ export function DashboardPage() {
           icone={Wallet}
           tom="success"
           loading={carregando}
+          to="/receitas"
         />
         <ResumoCard
           titulo="Total comprometido"
@@ -76,6 +78,7 @@ export function DashboardPage() {
           tom="warning"
           loading={carregando}
           subtitulo={`${formatarMoeda(totalCompromissos, moedaPadrao)} compromissos + ${formatarMoeda(totalParcelas, moedaPadrao)} parcelas`}
+          to="/compromissos"
         />
         <ResumoCard
           titulo="Falta pagar"
@@ -84,6 +87,7 @@ export function DashboardPage() {
           icone={AlertCircle}
           tom="destructive"
           loading={carregando}
+          to="/compromissos"
         />
         <ResumoCard
           titulo="Sobra do mês"
@@ -96,8 +100,8 @@ export function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <ResumoCardMultiMoeda titulo="Guardado" valores={guardadoPorMoeda} icone={PiggyBank} tom="primary" />
-        <ResumoCardMultiMoeda titulo="Investido" valores={investidoPorMoeda} icone={TrendingUp} tom="primary" />
+        <ResumoCardMultiMoeda titulo="Guardado" valores={guardadoPorMoeda} icone={PiggyBank} tom="primary" to="/patrimonio" />
+        <ResumoCardMultiMoeda titulo="Investido" valores={investidoPorMoeda} icone={TrendingUp} tom="primary" to="/patrimonio" />
         <ResumoCardMultiMoeda
           titulo="Patrimônio total"
           valores={moedasPatrimonio.map((moeda) => ({
@@ -107,6 +111,7 @@ export function DashboardPage() {
           }))}
           icone={PiggyBank}
           tom="primary"
+          to="/patrimonio"
         />
       </div>
 
@@ -116,7 +121,7 @@ export function DashboardPage() {
             <span className={cn("flex size-8 items-center justify-center rounded-lg", TONS.primary.chip)}>
               <Target className="size-4" />
             </span>
-            Progresso das metas
+            <Link to="/metas" className="hover:underline">Progresso das metas</Link>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -149,15 +154,16 @@ export function DashboardPage() {
 }
 
 function ResumoCardMultiMoeda({
-  titulo, valores, icone: Icone, tom,
+  titulo, valores, icone: Icone, tom, to,
 }: {
   titulo: string
   valores: { moeda: Moeda; valor: number }[]
   icone: typeof Wallet
   tom: Tom
+  to?: string
 }) {
-  return (
-    <Card>
+  const conteudo = (
+    <Card className={cn(to && "h-full transition-colors hover:border-primary")}>
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-sm text-muted-foreground">
           <span className={cn("flex size-8 items-center justify-center rounded-lg", TONS[tom].chip)}>
@@ -177,10 +183,11 @@ function ResumoCardMultiMoeda({
       </CardContent>
     </Card>
   )
+  return to ? <Link to={to}>{conteudo}</Link> : conteudo
 }
 
 function ResumoCard({
-  titulo, valor, moeda, icone: Icone, tom, loading, subtitulo,
+  titulo, valor, moeda, icone: Icone, tom, loading, subtitulo, to,
 }: {
   titulo: string
   valor: number
@@ -189,9 +196,10 @@ function ResumoCard({
   tom: Tom
   loading?: boolean
   subtitulo?: string
+  to?: string
 }) {
-  return (
-    <Card>
+  const conteudo = (
+    <Card className={cn(to && "h-full transition-colors hover:border-primary")}>
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-sm text-muted-foreground">
           <span className={cn("flex size-8 items-center justify-center rounded-lg", TONS[tom].chip)}>
@@ -212,4 +220,5 @@ function ResumoCard({
       </CardContent>
     </Card>
   )
+  return to ? <Link to={to}>{conteudo}</Link> : conteudo
 }
