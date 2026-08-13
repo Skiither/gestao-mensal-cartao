@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { useCartao } from "@/hooks/useCartoes"
 import {
   useComprasParceladas, useCreateCompraParcelada, useDeleteCompraParcelada, useMarcarParcelaPaga,
@@ -349,14 +350,21 @@ function CompraParceladaCard({
           >
             <Pencil className="size-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => { e.stopPropagation(); onDelete() }}
-            aria-label="Excluir compra"
-          >
-            <Trash2 className="size-4" />
-          </Button>
+          <ConfirmDialog
+            title="Excluir compra parcelada?"
+            description={`Isso vai excluir "${compra.descricao}" e todas as parcelas dela, permanentemente.`}
+            onConfirm={onDelete}
+            trigger={
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => e.stopPropagation()}
+                aria-label="Excluir compra"
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            }
+          />
           {expandido ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
         </div>
       </CardHeader>

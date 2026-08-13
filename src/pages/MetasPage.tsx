@@ -12,6 +12,7 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { useCreateMeta, useDeleteMeta, useMetas, useUpdateMeta } from "@/hooks/useMetas"
 import { useAuth } from "@/contexts/AuthContext"
 import { formatarMoeda } from "@/lib/format"
@@ -163,9 +164,16 @@ export function MetasPage() {
                     <Button variant="ghost" size="icon" className="size-7" onClick={() => openEdit(meta)} aria-label="Editar">
                       <Pencil className="size-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="size-7" onClick={() => onDelete(meta.id)} aria-label="Excluir">
-                      <Trash2 className="size-3.5" />
-                    </Button>
+                    <ConfirmDialog
+                      title="Excluir meta?"
+                      description={`Isso vai excluir a meta "${meta.nome}" permanentemente.`}
+                      onConfirm={() => onDelete(meta.id)}
+                      trigger={
+                        <Button variant="ghost" size="icon" className="size-7" aria-label="Excluir">
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      }
+                    />
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2">

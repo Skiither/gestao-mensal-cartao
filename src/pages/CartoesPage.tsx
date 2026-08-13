@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ConfirmDialog } from "@/components/ConfirmDialog"
 import { useCartoes, useCreateCartao, useUpdateCartao, useDeleteCartao } from "@/hooks/useCartoes"
 import { useQuantidadeComprasAtivasPorCartao, useTotalPendentePorCartao } from "@/hooks/useComprasParceladas"
 import { useAuth } from "@/contexts/AuthContext"
@@ -79,8 +80,7 @@ export function CartoesPage() {
     }
   }
 
-  async function onDelete(id: string, e: MouseEvent) {
-    e.preventDefault()
+  async function onDelete(id: string) {
     try {
       await deleteMutation.mutateAsync(id)
       toast.success("Cartão excluído")
@@ -188,9 +188,22 @@ export function CartoesPage() {
                     <Button variant="ghost" size="icon" className="size-7" onClick={(e) => openEdit(cartao, e)} aria-label="Editar">
                       <Pencil className="size-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="size-7" onClick={(e) => onDelete(cartao.id, e)} aria-label="Excluir">
-                      <Trash2 className="size-3.5" />
-                    </Button>
+                    <ConfirmDialog
+                      title="Excluir cartão?"
+                      description={`Isso vai excluir o cartão "${cartao.nome}" e todas as compras parceladas dele, permanentemente.`}
+                      onConfirm={() => onDelete(cartao.id)}
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7"
+                          onClick={(e) => e.preventDefault()}
+                          aria-label="Excluir"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      }
+                    />
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-1 text-sm text-muted-foreground">

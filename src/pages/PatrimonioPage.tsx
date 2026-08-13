@@ -13,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { ConfirmDialog } from "@/components/ConfirmDialog"
 import {
   moedasNoHistorico, useAtualizarLancamentoPatrimonio, useAtualizarPatrimonio,
   useDeleteLancamentoPatrimonio, usePatrimonioHistorico, valorAtualPorTipo,
@@ -242,9 +243,16 @@ export function PatrimonioPage() {
                       <Button variant="ghost" size="icon" onClick={() => openEdit(lancamento)} aria-label="Editar">
                         <Pencil className="size-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => onDelete(lancamento.id)} aria-label="Excluir">
-                        <Trash2 className="size-4" />
-                      </Button>
+                      <ConfirmDialog
+                        title="Excluir lançamento?"
+                        description="Isso vai excluir este lançamento de patrimônio permanentemente."
+                        onConfirm={() => onDelete(lancamento.id)}
+                        trigger={
+                          <Button variant="ghost" size="icon" aria-label="Excluir">
+                            <Trash2 className="size-4" />
+                          </Button>
+                        }
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

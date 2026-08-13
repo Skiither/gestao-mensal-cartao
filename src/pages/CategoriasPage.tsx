@@ -13,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { CompromissoCategoriaPainel } from "@/components/CompromissoCategoriaPainel"
+import { ConfirmDialog } from "@/components/ConfirmDialog"
 import {
   useCategorias, useCreateCategoria, useUpdateCategoria, useDeleteCategoria,
 } from "@/hooks/useCategorias"
@@ -80,8 +81,7 @@ export function CategoriasPage() {
     }
   }
 
-  async function onDelete(id: string, e: MouseEvent) {
-    e.stopPropagation()
+  async function onDelete(id: string) {
     try {
       await deleteMutation.mutateAsync(id)
       toast.success("Categoria excluída")
@@ -178,9 +178,22 @@ export function CategoriasPage() {
                       <Button variant="ghost" size="icon" className="size-7" onClick={(e) => openEdit(categoria, e)} aria-label="Editar">
                         <Pencil className="size-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="size-7" onClick={(e) => onDelete(categoria.id, e)} aria-label="Excluir">
-                        <Trash2 className="size-3.5" />
-                      </Button>
+                      <ConfirmDialog
+                        title="Excluir categoria?"
+                        description={`Isso vai excluir a categoria "${categoria.nome}" permanentemente. Os compromissos que usam ela ficam sem categoria.`}
+                        onConfirm={() => onDelete(categoria.id)}
+                        trigger={
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7"
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label="Excluir"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        }
+                      />
                       {isOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
                     </div>
                   </CardHeader>

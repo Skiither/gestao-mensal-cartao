@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { ConfirmDialog } from "@/components/ConfirmDialog"
 import {
   useReceitas, useCreateReceita, useUpdateReceita, useDeleteReceita, useEditarReceitaRecorrente,
 } from "@/hooks/useReceitas"
@@ -220,9 +221,16 @@ export function ReceitasPage() {
                       <Button variant="ghost" size="icon" onClick={() => openEdit(receita)} aria-label="Editar">
                         <Pencil className="size-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => onDelete(receita.id)} aria-label="Excluir">
-                        <Trash2 className="size-4" />
-                      </Button>
+                      <ConfirmDialog
+                        title="Excluir receita?"
+                        description={`Isso vai excluir "${receita.nome}" permanentemente.`}
+                        onConfirm={() => onDelete(receita.id)}
+                        trigger={
+                          <Button variant="ghost" size="icon" aria-label="Excluir">
+                            <Trash2 className="size-4" />
+                          </Button>
+                        }
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

@@ -13,6 +13,7 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { ConfirmDialog } from "@/components/ConfirmDialog"
 import {
   useCreateCompromisso, useUpdateCompromisso, useDeleteCompromisso, useMarcarCompromissoPago,
 } from "@/hooks/useCompromissos"
@@ -268,9 +269,16 @@ export function CompromissoCategoriaPainel({
                   <Button variant="ghost" size="icon" onClick={() => openEdit(compromisso)} aria-label="Editar">
                     <Pencil className="size-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => onDelete(compromisso.id)} aria-label="Excluir">
-                    <Trash2 className="size-4" />
-                  </Button>
+                  <ConfirmDialog
+                    title="Excluir compromisso?"
+                    description={`Isso vai excluir "${compromisso.nome}" permanentemente.`}
+                    onConfirm={() => onDelete(compromisso.id)}
+                    trigger={
+                      <Button variant="ghost" size="icon" aria-label="Excluir">
+                        <Trash2 className="size-4" />
+                      </Button>
+                    }
+                  />
                 </TableCell>
               </TableRow>
             ))}
