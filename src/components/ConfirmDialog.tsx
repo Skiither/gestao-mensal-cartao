@@ -1,32 +1,46 @@
-import type { ReactNode } from "react"
+import { cloneElement, useState, type MouseEvent, type ReactElement } from "react"
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
 interface ConfirmDialogProps {
-  trigger: ReactNode
+  /** Elemento clicável único. Estado controlado à parte (não via AlertDialogTrigger) porque o
+   *  Radix cancela a abertura quando o onClick do próprio trigger já chamou preventDefault
+   *  (necessário, por exemplo, quando o botão fica dentro de um Link). */
+  trigger: ReactElement<{ onClick?: (e: MouseEvent) => void }>
   title: string
   description: string
   confirmLabel?: string
   onConfirm: () => void
 }
 
-/** Confirmação antes de uma ação destrutiva (excluir). O `trigger` deve ser um único elemento clicável. */
+/** Confirmação antes de uma ação destrutiva (excluir). */
 export function ConfirmDialog({ trigger, title, description, confirmLabel = "Excluir", onConfirm }: ConfirmDialogProps) {
+  const [open, setOpen] = useState(false)
+
+  const triggerComEstado = cloneElement(trigger, {
+    onClick: (e: MouseEvent) => {
+      trigger.props.onClick?.(e)
+      setOpen(true)
+    },
+  })
+
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction variant="destructive" onClick={onConfirm}>{confirmLabel}</AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <>
+      {triggerComEstado}
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{title}</AlertDialogTitle>
+            <AlertDialogDescription>{description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={onConfirm}>{confirmLabel}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
