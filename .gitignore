@@ -26,3 +26,6 @@ dist-ssr
 
 .vercel
 .env*
+
+# Notas de continuidade só locais, não é pra subir
+CLAUDE.md
