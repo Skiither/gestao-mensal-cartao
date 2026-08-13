@@ -89,6 +89,15 @@ export type Patrimonio = {
   atualizado_em: string
 }
 
+export type MetaHistorico = {
+  id: string
+  meta_id: string
+  valor_anterior: number
+  valor_novo: number
+  diferenca: number
+  alterado_em: string
+}
+
 type Table<Row, Insert> = {
   Row: Row
   Insert: Insert
@@ -107,6 +116,7 @@ export type Database = {
       parcelas: Table<Parcela, Partial<Parcela> & { compra_parcelada_id: string; numero_parcela: number; competencia: string; valor: number }>
       metas: Table<Meta, Partial<Meta> & { nome: string; valor_desejado: number; user_id: string }>
       patrimonio: Table<Patrimonio, Partial<Patrimonio> & { tipo: TipoPatrimonio; valor: number; moeda: Moeda; user_id: string }>
+      metas_historico: Table<MetaHistorico, never>
     }
     Views: Record<string, never>
     Functions: Record<string, never>

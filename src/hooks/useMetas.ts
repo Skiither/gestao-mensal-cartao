@@ -1,9 +1,26 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/AuthContext"
-import type { Meta, Moeda } from "@/types/database"
+import type { Meta, MetaHistorico, Moeda } from "@/types/database"
 
 const KEY = ["metas"]
+
+export type MetaHistoricoComMeta = MetaHistorico & { metas: { nome: string; moeda: Moeda } | null }
+
+/** Cada linha é uma alteração de valor_acumulado (criação com valor inicial ou edição), gerada por trigger no banco. */
+export function useMetasHistorico() {
+  return useQuery({
+    queryKey: [...KEY, "historico"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("metas_historico")
+        .select("*, metas(nome, moeda)")
+        .order("alterado_em", { ascending: true })
+      if (error) throw error
+      return data as unknown as MetaHistoricoComMeta[]
+    },
+  })
+}
 
 export interface MetaInput {
   nome: string

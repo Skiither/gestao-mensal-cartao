@@ -26,6 +26,12 @@ export function proximaCompetencia(competencia: Competencia): Competencia {
   return competenciaAdjacente(competencia, 1)
 }
 
+/** Competência ('YYYY-MM') a que pertence uma data/timestamp ISO, no fuso local do navegador. */
+export function competenciaDeData(dataISO: string): Competencia {
+  const data = new Date(dataISO)
+  return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}`
+}
+
 /** Últimas `quantidade` competências terminando em `competencia`, da mais antiga pra mais recente. */
 export function ultimasCompetencias(competencia: Competencia, quantidade: number): Competencia[] {
   const lista: Competencia[] = []

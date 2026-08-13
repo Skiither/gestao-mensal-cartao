@@ -90,6 +90,18 @@ create table if not exists patrimonio (
   atualizado_em timestamptz default now()
 );
 
+-- Histórico de movimentações em metas: cada alteração de valor_acumulado (criação
+-- com valor inicial, ou edição) vira uma linha aqui via trigger, para poder mostrar
+-- no Histórico do mês se a pessoa colocou ou tirou dinheiro de alguma meta.
+create table if not exists metas_historico (
+  id uuid primary key default gen_random_uuid(),
+  meta_id uuid not null references metas(id) on delete cascade,
+  valor_anterior numeric(12,2) not null,
+  valor_novo numeric(12,2) not null,
+  diferenca numeric(12,2) not null,
+  alterado_em timestamptz not null default now()
+);
+
 -- ----------------------------------------------------------------------------
 -- Índices úteis (consultas são quase sempre filtradas por user_id + competência)
 -- ----------------------------------------------------------------------------
@@ -101,6 +113,8 @@ create index if not exists idx_parcelas_competencia on parcelas(competencia);
 create index if not exists idx_parcelas_compra on parcelas(compra_parcelada_id);
 create index if not exists idx_compras_parceladas_cartao on compras_parceladas(cartao_id);
 create index if not exists idx_cartoes_user on cartoes(user_id);
+create index if not exists idx_metas_historico_meta on metas_historico(meta_id);
+create index if not exists idx_metas_historico_alterado_em on metas_historico(alterado_em);
 
 -- ----------------------------------------------------------------------------
 -- Função + trigger: gerar/regenerar parcelas ao inserir ou editar compra_parcelada
@@ -164,6 +178,46 @@ create trigger trg_atualizar_parcelas
   execute function gerar_parcelas_compra();
 
 -- ----------------------------------------------------------------------------
+-- Função + triggers: registrar em metas_historico sempre que valor_acumulado
+-- muda (na criação da meta, se já nascer com valor, ou em qualquer edição).
+-- ----------------------------------------------------------------------------
+
+create or replace function registrar_historico_meta()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if TG_OP = 'INSERT' then
+    if new.valor_acumulado <> 0 then
+      insert into metas_historico (meta_id, valor_anterior, valor_novo, diferenca)
+      values (new.id, 0, new.valor_acumulado, new.valor_acumulado);
+    end if;
+    return new;
+  end if;
+
+  if new.valor_acumulado is distinct from old.valor_acumulado then
+    insert into metas_historico (meta_id, valor_anterior, valor_novo, diferenca)
+    values (old.id, old.valor_acumulado, new.valor_acumulado, new.valor_acumulado - old.valor_acumulado);
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_metas_historico_insert on metas;
+create trigger trg_metas_historico_insert
+  after insert on metas
+  for each row
+  execute function registrar_historico_meta();
+
+drop trigger if exists trg_metas_historico_update on metas;
+create trigger trg_metas_historico_update
+  after update on metas
+  for each row
+  execute function registrar_historico_meta();
+
+-- ----------------------------------------------------------------------------
 -- Row Level Security
 -- ----------------------------------------------------------------------------
 
@@ -175,6 +229,7 @@ alter table compras_parceladas enable row level security;
 alter table parcelas enable row level security;
 alter table metas enable row level security;
 alter table patrimonio enable row level security;
+alter table metas_historico enable row level security;
 
 -- Tabelas com user_id direto: policy simples auth.uid() = user_id
 
@@ -229,5 +284,16 @@ create policy "parcelas_owner" on parcelas
       join cartoes on cartoes.id = compras_parceladas.cartao_id
       where compras_parceladas.id = parcelas.compra_parcelada_id
         and cartoes.user_id = auth.uid()
+    )
+  );
+
+-- Só leitura: as linhas são criadas exclusivamente pelo trigger (security definer),
+-- o app nunca insere/edita/apaga metas_historico diretamente.
+create policy "metas_historico_owner_select" on metas_historico
+  for select using (
+    exists (
+      select 1 from metas
+      where metas.id = metas_historico.meta_id
+        and metas.user_id = auth.uid()
     )
   );
