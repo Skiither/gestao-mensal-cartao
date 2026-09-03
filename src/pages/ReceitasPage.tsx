@@ -101,8 +101,8 @@ export function ReceitasPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Receitas</h1>
-          <p className="text-sm text-muted-foreground capitalize">{formatarCompetencia(competencia)}</p>
+          <h1 className="font-heading text-[clamp(1.9rem,4vw,2.6rem)] font-normal leading-[1.05] tracking-tight">Receitas</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">{formatarCompetencia(competencia)}</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -190,7 +190,7 @@ export function ReceitasPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">
-            Total do mês: <span className="text-green-600">{formatarMoeda(total, moedaPadrao)}</span>
+            Total do mês: <span className="font-mono font-semibold tabular-nums text-success">{formatarMoeda(total, moedaPadrao)}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -218,7 +218,7 @@ export function ReceitasPage() {
                         {receita.tipo === "recorrente" ? "Recorrente" : "Extraordinária"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{formatarData(receita.data)}</TableCell>
+                    <TableCell className="font-mono tabular-nums">{formatarData(receita.data)}</TableCell>
                     <TableCell className="text-right">{formatarMoeda(receita.valor, moedaPadrao)}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" onClick={() => openEdit(receita)} aria-label="Editar">

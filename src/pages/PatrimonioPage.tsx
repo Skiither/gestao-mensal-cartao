@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { toast } from "sonner"
-import { Landmark, Pencil, PiggyBank, Plus, Trash2, TrendingUp } from "lucide-react"
+import { Pencil, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -19,6 +19,7 @@ import {
 } from "@/hooks/usePatrimonioItens"
 import { useAuth } from "@/contexts/AuthContext"
 import { formatarMoeda } from "@/lib/format"
+import { cn } from "@/lib/utils"
 import type { Moeda, PatrimonioItem, TipoItemPatrimonio } from "@/types/database"
 
 const itemSchema = z.object({
@@ -57,33 +58,33 @@ export function PatrimonioPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Patrimônio</h1>
+      <h1 className="font-heading text-[clamp(1.9rem,4vw,2.6rem)] font-normal leading-[1.05] tracking-tight">Património</h1>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Saldo geral (suas contas)</CardTitle>
+            <CardTitle className="font-mono text-xs font-medium tracking-wider text-muted-foreground uppercase">Saldo geral (suas contas)</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1">
+          <CardContent>
             {saldoGeral.length === 0 ? (
-              <p className="text-2xl font-bold">{formatarMoeda(0)}</p>
+              <p className="font-mono text-2xl font-medium tracking-tight">{formatarMoeda(0)}</p>
             ) : (
-              saldoGeral.map((v) => (
-                <p key={v.moeda} className="text-2xl font-bold tabular-nums">{formatarMoeda(v.valor, v.moeda)}</p>
+              saldoGeral.map((v, i) => (
+                <p key={v.moeda} className={cn("font-mono tabular-nums tracking-tight", i === 0 ? "text-2xl font-medium" : "text-sm text-muted-foreground")}>{formatarMoeda(v.valor, v.moeda)}</p>
               ))
             )}
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Patrimônio total</CardTitle>
+            <CardTitle className="font-mono text-xs font-medium tracking-wider text-muted-foreground uppercase">Patrimônio total</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1">
+          <CardContent>
             {patrimonioTotal.length === 0 ? (
-              <p className="text-2xl font-bold">{formatarMoeda(0)}</p>
+              <p className="font-mono text-2xl font-medium tracking-tight">{formatarMoeda(0)}</p>
             ) : (
-              patrimonioTotal.map((v) => (
-                <p key={v.moeda} className="text-2xl font-bold tabular-nums">{formatarMoeda(v.valor, v.moeda)}</p>
+              patrimonioTotal.map((v, i) => (
+                <p key={v.moeda} className={cn("font-mono tabular-nums tracking-tight", i === 0 ? "text-2xl font-medium" : "text-sm text-muted-foreground")}>{formatarMoeda(v.valor, v.moeda)}</p>
               ))
             )}
           </CardContent>
@@ -94,7 +95,6 @@ export function PatrimonioPage() {
         tipo="conta"
         titulo="Minhas contas"
         vazio="Nenhuma conta ainda. Adicione onde seu dinheiro fica no dia a dia (banco, carteira, dinheiro em espécie...)."
-        icone={Landmark}
         itens={contas}
         subtotal={saldoGeral}
         isLoading={isLoading}
@@ -104,7 +104,6 @@ export function PatrimonioPage() {
         tipo="guardado"
         titulo="Guardado"
         vazio="Nada guardado ainda. Adicione uma reserva, poupança, cofrinho... com o nome que quiser."
-        icone={PiggyBank}
         itens={guardado}
         subtotal={totalGuardado}
         isLoading={isLoading}
@@ -114,7 +113,6 @@ export function PatrimonioPage() {
         tipo="investido"
         titulo="Investido"
         vazio="Nada investido ainda. Adicione onde seu dinheiro está aplicado (XP, Rico, Nubank, tesouro...)."
-        icone={TrendingUp}
         itens={investido}
         subtotal={totalInvestido}
         isLoading={isLoading}
@@ -125,12 +123,11 @@ export function PatrimonioPage() {
 }
 
 function SecaoItens({
-  tipo, titulo, vazio, icone: Icone, itens, subtotal, isLoading, moedaPadrao,
+  tipo, titulo, vazio, itens, subtotal, isLoading, moedaPadrao,
 }: {
   tipo: TipoItemPatrimonio
   titulo: string
   vazio: string
-  icone: typeof Landmark
   itens: PatrimonioItem[]
   subtotal: { moeda: Moeda; valor: number }[]
   isLoading: boolean
@@ -187,13 +184,12 @@ function SecaoItens({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start justify-between gap-3">
-        <div className="min-w-0">
-          <CardTitle className="text-base">{titulo}</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between gap-3">
+        <CardTitle className="text-base">{titulo}</CardTitle>
+        <div className="flex items-center gap-3">
           {subtotal.length > 0 && (
-            <p className="mt-0.5 text-sm text-muted-foreground tabular-nums">{textoMoedas(subtotal)}</p>
+            <span className="hidden font-mono text-sm text-muted-foreground tabular-nums sm:inline">{textoMoedas(subtotal)}</span>
           )}
-        </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" variant="outline" onClick={openCreate}>
@@ -271,6 +267,7 @@ function SecaoItens({
             </Form>
           </DialogContent>
         </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -281,11 +278,8 @@ function SecaoItens({
           <ul className="divide-y">
             {itens.map((item) => (
               <li key={item.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Icone className="size-4" />
-                </span>
-                <span className="flex-1 truncate font-medium">{item.nome}</span>
-                <span className="tabular-nums">{formatarMoeda(item.valor, item.moeda)}</span>
+                <span className="flex-1 truncate">{item.nome}</span>
+                <span className="font-mono tabular-nums">{formatarMoeda(item.valor, item.moeda)}</span>
                 <Button variant="ghost" size="icon" className="size-7" onClick={() => openEdit(item)} aria-label="Editar">
                   <Pencil className="size-3.5" />
                 </Button>

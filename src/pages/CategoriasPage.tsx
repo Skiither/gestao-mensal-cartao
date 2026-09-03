@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { toast } from "sonner"
-import { ChevronDown, ChevronUp, Layers, Pencil, Plus, Trash2 } from "lucide-react"
+import { ChevronDown, ChevronUp, Pencil, Plus, Trash2 } from "lucide-react"
 import { DivisaoDonut } from "@/components/DivisaoDonut"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -128,7 +128,7 @@ export function CategoriasPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Categorias</h1>
+        <h1 className="font-heading text-[clamp(1.9rem,4vw,2.6rem)] font-normal leading-[1.05] tracking-tight">Categorias</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button onClick={openCreate}>
@@ -188,7 +188,7 @@ export function CategoriasPage() {
                 <CollapsibleTrigger asChild>
                   <CardHeader className="cursor-pointer flex flex-row items-start justify-between hover:bg-accent/40">
                     <div className="flex items-center gap-2">
-                      <Layers className="size-5" style={{ color: cor }} />
+                      <span className="size-3 shrink-0 rounded-[3px]" style={{ backgroundColor: cor }} />
                       <CardTitle className="text-base">{categoria.nome}</CardTitle>
                     </div>
                     <div className="flex items-center gap-1">
@@ -222,8 +222,8 @@ export function CategoriasPage() {
                       : `${itens.length} compromisso(s) · ${ativos} recorrente(s)`}
                   </p>
                   {itens.length > 0 && (
-                    <p className="text-foreground font-medium">
-                      {formatarMoeda(itens.reduce((acc, c) => acc + c.valor, 0), moedaPadrao)} no total
+                    <p className="text-foreground">
+                      <span className="font-mono font-medium tabular-nums">{formatarMoeda(itens.reduce((acc, c) => acc + c.valor, 0), moedaPadrao)}</span> no total
                     </p>
                   )}
                 </CardContent>

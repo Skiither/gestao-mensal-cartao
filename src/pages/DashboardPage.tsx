@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom"
-import { Wallet, Receipt, AlertCircle, PiggyBank, TrendingUp, Target } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { BalancoDoMes } from "@/components/BalancoDoMes"
@@ -16,11 +15,11 @@ import { cn } from "@/lib/utils"
 import type { Moeda } from "@/types/database"
 
 const TONS = {
-  success: { valor: "text-success", chip: "bg-success/15 text-success" },
-  primary: { valor: "text-primary", chip: "bg-primary/10 text-primary" },
-  warning: { valor: "text-warning", chip: "bg-warning/15 text-warning" },
-  destructive: { valor: "text-destructive", chip: "bg-destructive/10 text-destructive" },
-  info: { valor: "text-info", chip: "bg-info/15 text-info" },
+  success: "text-success",
+  primary: "text-primary",
+  warning: "text-warning",
+  destructive: "text-destructive",
+  info: "text-info",
 } as const
 type Tom = keyof typeof TONS
 
@@ -57,18 +56,17 @@ export function DashboardPage() {
   ]))
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-muted-foreground capitalize">{formatarCompetencia(competencia)}</p>
+    <div>
+      <div className="mb-[1.6rem]">
+        <h1 className="font-heading text-[clamp(1.9rem,4vw,2.6rem)] font-normal leading-[1.05] tracking-tight">Painel</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">{formatarCompetencia(competencia)}</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-[0.9rem] grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <ResumoCard
           titulo="Entradas do mês"
           valor={totalReceitas}
           moeda={moedaPadrao}
-          icone={Wallet}
           tom="success"
           loading={carregando}
           to="/receitas"
@@ -77,17 +75,15 @@ export function DashboardPage() {
           titulo="Total comprometido"
           valor={totalComprometido}
           moeda={moedaPadrao}
-          icone={Receipt}
           tom="warning"
           loading={carregando}
-          subtitulo={`${formatarMoeda(totalCompromissos, moedaPadrao)} compromissos + ${formatarMoeda(totalParcelas, moedaPadrao)} parcelas`}
+          subtitulo={`${formatarMoeda(totalCompromissos, moedaPadrao)} compromissos + ${formatarMoeda(totalParcelas, moedaPadrao)} cartão`}
           to="/compromissos"
         />
         <ResumoCard
           titulo="Falta pagar"
           valor={faltaPagar}
           moeda={moedaPadrao}
-          icone={AlertCircle}
           tom="destructive"
           loading={carregando}
           to="/compromissos"
@@ -96,16 +92,15 @@ export function DashboardPage() {
           titulo="Sobra do mês"
           valor={saldo}
           moeda={moedaPadrao}
-          icone={TrendingUp}
           tom="info"
           loading={carregando}
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <ResumoCardMultiMoeda titulo="Saldo geral" valores={saldoGeralPorMoeda} icone={Wallet} tom="primary" to="/patrimonio" />
-        <ResumoCardMultiMoeda titulo="Guardado" valores={guardadoPorMoeda} icone={PiggyBank} tom="primary" to="/patrimonio" />
-        <ResumoCardMultiMoeda titulo="Investido" valores={investidoPorMoeda} icone={TrendingUp} tom="primary" to="/patrimonio" />
+      <div className="mb-[1.4rem] grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <ResumoCardMultiMoeda titulo="Saldo geral" valores={saldoGeralPorMoeda} tom="primary" to="/patrimonio" />
+        <ResumoCardMultiMoeda titulo="Guardado" valores={guardadoPorMoeda} tom="primary" to="/patrimonio" />
+        <ResumoCardMultiMoeda titulo="Investido" valores={investidoPorMoeda} tom="primary" to="/patrimonio" />
         <ResumoCardMultiMoeda
           titulo="Patrimônio total"
           valores={moedasPatrimonio.map((moeda) => ({
@@ -114,7 +109,6 @@ export function DashboardPage() {
               + (guardadoPorMoeda.find((v) => v.moeda === moeda)?.valor ?? 0)
               + (investidoPorMoeda.find((v) => v.moeda === moeda)?.valor ?? 0),
           }))}
-          icone={PiggyBank}
           tom="primary"
           to="/patrimonio"
         />
@@ -122,10 +116,7 @@ export function DashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <span className={cn("flex size-8 items-center justify-center rounded-lg", TONS.primary.chip)}>
-              <Target className="size-4" />
-            </span>
+          <CardTitle className="text-base">
             <Link to="/metas" className="hover:underline">Progresso das metas</Link>
           </CardTitle>
         </CardHeader>
@@ -139,10 +130,10 @@ export function DashboardPage() {
                   ? Math.min(100, (meta.valor_acumulado / meta.valor_desejado) * 100)
                   : 0
                 return (
-                  <div key={meta.id} className="space-y-1">
+                  <div key={meta.id} className="space-y-1.5">
                     <div className="flex justify-between text-sm">
                       <span className="font-medium">{meta.nome}</span>
-                      <span className="text-muted-foreground tabular-nums">
+                      <span className="font-mono text-xs text-muted-foreground tabular-nums">
                         {formatarMoeda(meta.valor_acumulado, meta.moeda)} / {formatarMoeda(meta.valor_desejado, meta.moeda)}
                       </span>
                     </div>
@@ -155,80 +146,71 @@ export function DashboardPage() {
         </CardContent>
       </Card>
 
-      <div className="space-y-4 pt-2">
-        <h2 className="text-lg font-semibold">Balanço do mês</h2>
-        <BalancoDoMes />
-      </div>
+      <h2 className="mt-8 mb-[0.9rem] font-heading text-[1.3rem] font-medium tracking-tight">Balanço do mês</h2>
+      <BalancoDoMes />
     </div>
   )
 }
 
+const STAT_BOX = "block h-full rounded-lg border border-border bg-card px-4 pt-3.5 pb-4"
+const STAT_LAB = "font-mono text-[0.66rem] font-medium tracking-[0.12em] text-muted-foreground uppercase"
+const STAT_VAL = "mt-2 font-mono text-2xl tabular-nums tracking-tight leading-none"
+
 function ResumoCardMultiMoeda({
-  titulo, valores, icone: Icone, tom, to,
+  titulo, valores, tom, to,
 }: {
   titulo: string
   valores: { moeda: Moeda; valor: number }[]
-  icone: typeof Wallet
   tom: Tom
   to?: string
 }) {
   const conteudo = (
-    <Card className={cn(to && "h-full transition-colors hover:border-primary")}>
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className={cn("flex size-8 items-center justify-center rounded-lg", TONS[tom].chip)}>
-            <Icone className="size-4" />
-          </span>
-          {titulo}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-1">
-        {valores.length === 0 ? (
-          <p className={cn("text-2xl font-bold tabular-nums", TONS[tom].valor)}>{formatarMoeda(0)}</p>
-        ) : (
-          valores.map(({ moeda, valor }) => (
-            <p key={moeda} className={cn("text-2xl font-bold tabular-nums", TONS[tom].valor)}>{formatarMoeda(valor, moeda)}</p>
-          ))
-        )}
-      </CardContent>
-    </Card>
+    <div className={cn(STAT_BOX, to && "transition-colors hover:border-primary")}>
+      <div className={STAT_LAB}>{titulo}</div>
+      {valores.length === 0 ? (
+        <p className={cn(STAT_VAL, TONS[tom])}>{formatarMoeda(0)}</p>
+      ) : (
+        valores.map(({ moeda, valor }, i) => (
+          <p
+            key={moeda}
+            className={
+              i === 0
+                ? cn(STAT_VAL, TONS[tom])
+                : "mt-0.5 font-mono text-sm tabular-nums text-muted-foreground"
+            }
+          >
+            {formatarMoeda(valor, moeda)}
+          </p>
+        ))
+      )}
+    </div>
   )
   return to ? <Link to={to}>{conteudo}</Link> : conteudo
 }
 
 function ResumoCard({
-  titulo, valor, moeda, icone: Icone, tom, loading, subtitulo, to,
+  titulo, valor, moeda, tom, loading, subtitulo, to,
 }: {
   titulo: string
   valor: number
   moeda: Moeda
-  icone: typeof Wallet
   tom: Tom
   loading?: boolean
   subtitulo?: string
   to?: string
 }) {
   const conteudo = (
-    <Card className={cn(to && "h-full transition-colors hover:border-primary")}>
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className={cn("flex size-8 items-center justify-center rounded-lg", TONS[tom].chip)}>
-            <Icone className="size-4" />
-          </span>
-          {titulo}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <p className="text-sm text-muted-foreground">Carregando...</p>
-        ) : (
-          <>
-            <p className={cn("text-2xl font-bold tabular-nums", TONS[tom].valor)}>{formatarMoeda(valor, moeda)}</p>
-            {subtitulo && <p className="mt-1 text-xs text-muted-foreground">{subtitulo}</p>}
-          </>
-        )}
-      </CardContent>
-    </Card>
+    <div className={cn(STAT_BOX, to && "transition-colors hover:border-primary")}>
+      <div className={STAT_LAB}>{titulo}</div>
+      {loading ? (
+        <p className="mt-2 text-sm text-muted-foreground">Carregando...</p>
+      ) : (
+        <>
+          <p className={cn(STAT_VAL, TONS[tom])}>{formatarMoeda(valor, moeda)}</p>
+          {subtitulo && <p className="mt-1.5 text-xs text-muted-foreground">{subtitulo}</p>}
+        </>
+      )}
+    </div>
   )
   return to ? <Link to={to}>{conteudo}</Link> : conteudo
 }

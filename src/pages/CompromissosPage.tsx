@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { toast } from "sonner"
-import { ChevronDown, ChevronUp, CreditCard, Layers, Plus } from "lucide-react"
+import { ChevronDown, ChevronUp, CreditCard, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -124,11 +124,6 @@ export function CompromissosPage() {
     return mapa
   }, [parcelas])
 
-  const totalComprometido = (compromissos?.reduce((acc, c) => acc + c.valor, 0) ?? 0)
-    + (parcelas?.reduce((acc, p) => acc + p.valor, 0) ?? 0)
-  const totalPendente = (compromissos?.filter((c) => c.status === "pendente").reduce((acc, c) => acc + c.valor, 0) ?? 0)
-    + (parcelas?.filter((p) => p.status === "pendente").reduce((acc, p) => acc + p.valor, 0) ?? 0)
-
   async function onToggleParcela(parcelaId: string, pago: boolean) {
     try {
       await marcarParcelaPagaMutation.mutateAsync({ id: parcelaId, status: pago ? "pago" : "pendente" })
@@ -141,8 +136,8 @@ export function CompromissosPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Compromissos</h1>
-          <p className="text-sm text-muted-foreground capitalize">{formatarCompetencia(competencia)}</p>
+          <h1 className="font-heading text-[clamp(1.9rem,4vw,2.6rem)] font-normal leading-[1.05] tracking-tight">Compromissos</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">{formatarCompetencia(competencia)}</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -253,21 +248,6 @@ export function CompromissosPage() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Total comprometido</CardTitle>
-          </CardHeader>
-          <CardContent className="text-xl font-semibold">{formatarMoeda(totalComprometido, moedaPadrao)}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Ainda pendente</CardTitle>
-          </CardHeader>
-          <CardContent className="text-xl font-semibold text-amber-600">{formatarMoeda(totalPendente, moedaPadrao)}</CardContent>
-        </Card>
-      </div>
-
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : (() => {
@@ -285,16 +265,16 @@ export function CompromissosPage() {
               <Collapsible open={isOpen} onOpenChange={() => toggleAberto(categoria.id)} asChild>
                 <Card className="h-fit border-l-4 transition-colors" style={{ borderLeftColor: cor }}>
                   <CollapsibleTrigger asChild>
-                    <CardHeader className="cursor-pointer flex-row items-center justify-between gap-2 hover:bg-accent/40">
+                    <CardHeader className="flex cursor-pointer flex-row items-center justify-between gap-2 hover:bg-accent/40">
                       <div className="flex items-center gap-2">
-                        <Layers className="size-5" style={{ color: cor }} />
+                        <span className="size-3 shrink-0 rounded-[3px]" style={{ backgroundColor: cor }} />
                         <CardTitle className="text-base">{categoria.nome}</CardTitle>
                       </div>
                       {isOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
                     </CardHeader>
                   </CollapsibleTrigger>
                   <CardContent className="space-y-1 text-sm text-muted-foreground">
-                    <p className="text-lg font-semibold text-foreground">{formatarMoeda(total, moedaPadrao)}</p>
+                    <p className="font-mono text-[1.15rem] tabular-nums text-foreground">{formatarMoeda(total, moedaPadrao)}</p>
                     <p>{itens.length === 0 ? "Nada neste mês" : `${pendentes} pendente(s) de ${itens.length}`}</p>
                   </CardContent>
                   <CollapsibleContent>
@@ -321,16 +301,16 @@ export function CompromissosPage() {
               <Collapsible open={isOpen} onOpenChange={() => toggleAberto(SEM_CATEGORIA_ID)} asChild>
                 <Card className="h-fit transition-colors">
                   <CollapsibleTrigger asChild>
-                    <CardHeader className="cursor-pointer flex-row items-center justify-between gap-2 hover:bg-accent/40">
+                    <CardHeader className="flex cursor-pointer flex-row items-center justify-between gap-2 hover:bg-accent/40">
                       <div className="flex items-center gap-2">
-                        <Layers className="size-5 text-muted-foreground" />
+                        <span className="size-3 shrink-0 rounded-[3px] bg-muted-foreground/40" />
                         <CardTitle className="text-base">Sem categoria</CardTitle>
                       </div>
                       {isOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
                     </CardHeader>
                   </CollapsibleTrigger>
                   <CardContent className="space-y-1 text-sm text-muted-foreground">
-                    <p className="text-lg font-semibold text-foreground">
+                    <p className="font-mono text-[1.15rem] tabular-nums text-foreground">
                       {formatarMoeda(semCategoria.reduce((acc, c) => acc + c.valor, 0), moedaPadrao)}
                     </p>
                     <p>{semCategoria.filter((c) => c.status === "pendente").length} pendente(s) de {semCategoria.length}</p>
@@ -361,7 +341,7 @@ export function CompromissosPage() {
               <Collapsible open={isOpen} onOpenChange={() => toggleAberto(id)} asChild>
                 <Card className="h-fit border-l-4 border-l-primary transition-colors">
                   <CollapsibleTrigger asChild>
-                    <CardHeader className="cursor-pointer flex-row items-center justify-between gap-2 hover:bg-accent/40">
+                    <CardHeader className="flex cursor-pointer flex-row items-center justify-between gap-2 hover:bg-accent/40">
                       <div className="flex items-center gap-2">
                         <CreditCard className="size-5 text-primary" />
                         <CardTitle className="text-base">Fatura {fatura.cartaoNome}</CardTitle>
@@ -370,7 +350,7 @@ export function CompromissosPage() {
                     </CardHeader>
                   </CollapsibleTrigger>
                   <CardContent className="space-y-1 text-sm text-muted-foreground">
-                    <p className="text-lg font-semibold text-foreground">{formatarMoeda(fatura.total, moedaPadrao)}</p>
+                    <p className="font-mono text-[1.15rem] tabular-nums text-foreground">{formatarMoeda(fatura.total, moedaPadrao)}</p>
                     <p>{fatura.pendentes} pendente(s) · vence dia {fatura.diaVencimento}</p>
                   </CardContent>
                   <CollapsibleContent>

@@ -18,13 +18,13 @@ export function competenciaAtual(): Competencia {
 
 export function formatarCompetencia(competencia: Competencia): string {
   const [ano, mes] = competencia.split("-").map(Number)
-  return `${MESES[mes - 1]}/${ano}`
+  return `${MESES[mes - 1]} de ${ano}`
 }
 
-/** Versão curta ('Set/2026') — para telas estreitas. */
+/** Versão curta ('Set 2026') — para telas estreitas. */
 export function formatarCompetenciaCurta(competencia: Competencia): string {
   const [ano, mes] = competencia.split("-").map(Number)
-  return `${MESES_CURTOS[mes - 1]}/${ano}`
+  return `${MESES_CURTOS[mes - 1]} ${ano}`
 }
 
 /** Quebra 'YYYY-MM' em ano e mês (1-12) numéricos. */

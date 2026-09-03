@@ -55,8 +55,8 @@ export function DivisaoDonut({
                 </PieChart>
               </ResponsiveContainer>
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-xs text-muted-foreground">Total</span>
-                <span className="text-sm font-semibold tabular-nums">
+                <span className="text-[0.68rem] text-muted-foreground">Total</span>
+                <span className="mt-0.5 font-mono text-sm font-medium tabular-nums">
                   {formatarMoeda(total, moeda)}
                 </span>
               </div>
@@ -66,14 +66,14 @@ export function DivisaoDonut({
               {fatias.map((f) => (
                 <li key={f.nome} className="flex items-center gap-2 text-sm">
                   <span
-                    className="size-2.5 shrink-0 rounded-full"
+                    className="size-2.5 shrink-0 rounded-[3px]"
                     style={{ backgroundColor: f.cor }}
                   />
                   <span className="flex-1 truncate">{f.nome}</span>
-                  <span className="tabular-nums text-muted-foreground">
+                  <span className="font-mono text-xs tabular-nums text-muted-foreground">
                     {total > 0 ? `${((f.valor / total) * 100).toFixed(1)}%` : "—"}
                   </span>
-                  <span className="w-24 text-right font-medium tabular-nums">
+                  <span className="w-24 text-right font-mono font-medium tabular-nums">
                     {formatarMoeda(f.valor, moeda)}
                   </span>
                 </li>

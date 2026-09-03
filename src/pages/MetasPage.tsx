@@ -81,7 +81,7 @@ export function MetasPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Metas</h1>
+        <h1 className="font-heading text-[clamp(1.9rem,4vw,2.6rem)] font-normal leading-[1.05] tracking-tight">Metas</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button onClick={openCreate}>
@@ -179,10 +179,12 @@ export function MetasPage() {
                 <CardContent className="space-y-2">
                   <Progress value={percentual} />
                   <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>{formatarMoeda(meta.valor_acumulado, meta.moeda)} de {formatarMoeda(meta.valor_desejado, meta.moeda)}</span>
-                    <span>{percentual.toFixed(0)}%</span>
+                    <span className="font-mono tabular-nums">
+                      <span className="font-medium text-foreground">{formatarMoeda(meta.valor_acumulado, meta.moeda)}</span> de {formatarMoeda(meta.valor_desejado, meta.moeda)}
+                    </span>
+                    <span className="font-mono tabular-nums">{percentual.toFixed(0)}%</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">Faltam {formatarMoeda(restante, meta.moeda)}</p>
+                  <p className="text-sm text-muted-foreground">Faltam <span className="font-mono tabular-nums">{formatarMoeda(restante, meta.moeda)}</span></p>
                 </CardContent>
               </Card>
             )

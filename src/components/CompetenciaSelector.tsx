@@ -32,22 +32,22 @@ export function CompetenciaSelector() {
   }
 
   return (
-    <div className="flex items-center gap-1 rounded-md border bg-background px-1 py-1">
+    <div className="flex items-center gap-0.5">
       <Button
         variant="ghost"
         size="icon"
-        className="size-7"
+        className="size-6"
         onClick={() => setCompetencia(competenciaAdjacente(competencia, -1))}
         aria-label="Mês anterior"
       >
-        <ChevronLeft className="size-4" />
+        <ChevronLeft className="size-3.5" />
       </Button>
 
       <Popover open={open} onOpenChange={abrir}>
         <PopoverTrigger asChild>
           <Button
             variant="ghost"
-            className="h-7 min-w-0 px-1.5 text-sm font-medium capitalize sm:min-w-28 sm:px-2"
+            className="h-6 min-w-0 px-1.5 text-[0.8rem] font-medium sm:min-w-24 sm:px-2"
             aria-label="Escolher mês e ano"
           >
             <span className="sm:hidden">{formatarCompetenciaCurta(competencia)}</span>
@@ -104,11 +104,11 @@ export function CompetenciaSelector() {
       <Button
         variant="ghost"
         size="icon"
-        className="size-7"
+        className="size-6"
         onClick={() => setCompetencia(competenciaAdjacente(competencia, 1))}
         aria-label="Próximo mês"
       >
-        <ChevronRight className="size-4" />
+        <ChevronRight className="size-3.5" />
       </Button>
     </div>
   )

@@ -260,7 +260,7 @@ export function CompromissoCategoriaPainel({
                 <TableCell className={cn(compromisso.status === "pago" && "line-through")}>
                   {compromisso.nome}
                 </TableCell>
-                <TableCell>{formatarData(compromisso.vencimento)}</TableCell>
+                <TableCell className="font-mono tabular-nums">{formatarData(compromisso.vencimento)}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {compromisso.recorrencia === "recorrente" ? "Recorrente" : "Eventual"}
                 </TableCell>

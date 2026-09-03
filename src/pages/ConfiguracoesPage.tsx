@@ -64,7 +64,7 @@ export function ConfiguracoesPage() {
             <ArrowLeft className="size-4" />
           </Link>
         </Button>
-        <h1 className="text-2xl font-semibold">Configurações</h1>
+        <h1 className="font-heading text-[clamp(1.9rem,4vw,2.6rem)] font-normal leading-[1.05] tracking-tight">Configurações</h1>
       </div>
 
       <Card>

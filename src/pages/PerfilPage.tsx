@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import { useTheme } from "next-themes"
-import { Moon, Settings, Sun } from "lucide-react"
+import { Settings } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -23,8 +23,8 @@ export function PerfilPage() {
   const email = user?.email ?? ""
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
-      <h1 className="text-2xl font-semibold">Perfil</h1>
+    <div className="max-w-[34rem] space-y-4">
+      <h1 className="font-heading text-[clamp(1.9rem,4vw,2.6rem)] font-normal leading-[1.05] tracking-tight">Perfil</h1>
 
       <Card>
         <CardContent className="pt-6">
@@ -55,14 +55,12 @@ export function PerfilPage() {
             </div>
             <div className="flex items-center justify-between gap-4">
               <dt className="text-sm text-muted-foreground">Tema escuro</dt>
-              <dd className="flex items-center gap-2">
-                <Sun className="size-4 text-muted-foreground" />
+              <dd className="flex items-center">
                 <Switch
                   checked={escuro}
                   onCheckedChange={(v) => setTheme(v ? "dark" : "light")}
                   aria-label="Alternar entre tema claro e escuro"
                 />
-                <Moon className="size-4 text-muted-foreground" />
               </dd>
             </div>
           </dl>

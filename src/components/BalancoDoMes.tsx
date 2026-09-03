@@ -1,7 +1,7 @@
 import { useMemo } from "react"
-import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { DivisaoDonut } from "@/components/DivisaoDonut"
 import { useCompromissos } from "@/hooks/useCompromissos"
 import { useParcelasDaCompetencia } from "@/hooks/useComprasParceladas"
 import { useCategorias } from "@/hooks/useCategorias"
@@ -19,6 +19,9 @@ export function BalancoDoMes() {
   const { data: parcelas } = useParcelasDaCompetencia(competencia)
   const { data: categorias } = useCategorias()
   const { data: receitas } = useReceitas(competencia)
+
+  const comp = formatarCompetencia(competencia)
+  const mesLabel = comp.charAt(0).toUpperCase() + comp.slice(1)
 
   const porCategoria = useMemo(() => {
     const nomeDaCategoria = (id: string | null) => categorias?.find((c) => c.id === id)?.nome ?? "Sem categoria"
@@ -39,6 +42,13 @@ export function BalancoDoMes() {
     if (sobra > 0) fatias.push({ nome: "Sobra", valor: sobra })
     return fatias
   }, [compromissos, categorias, parcelas, receitas])
+
+  const fatiasDonut = useMemo(
+    () => porCategoria
+      .map((f) => ({ nome: f.nome, valor: f.valor, cor: corPorNome(f.nome) }))
+      .sort((a, b) => b.valor - a.valor),
+    [porCategoria],
+  )
 
   const faturas = useMemo(() => {
     const porCartao = new Map<string, { cartaoNome: string; total: number; compras: Set<string> }>()
@@ -63,46 +73,27 @@ export function BalancoDoMes() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base capitalize">
-            Distribuição do mês — {formatarCompetencia(competencia)}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loadingCompromissos ? (
+      {loadingCompromissos ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Distribuição do mês — {mesLabel}</CardTitle>
+          </CardHeader>
+          <CardContent>
             <p className="text-sm text-muted-foreground">Carregando...</p>
-          ) : porCategoria.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nada nesta competência.</p>
-          ) : (
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={porCategoria}
-                    dataKey="valor"
-                    nameKey="nome"
-                    outerRadius="70%"
-                    label={(props) => `${((props.percent ?? 0) * 100).toFixed(0)}%`}
-                  >
-                    {porCategoria.map((fatia) => (
-                      <Cell key={fatia.nome} fill={corPorNome(fatia.nome)} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => formatarMoeda(Number(value), moedaPadrao)} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : (
+        <DivisaoDonut
+          titulo={`Distribuição do mês — ${mesLabel}`}
+          fatias={fatiasDonut}
+          moeda={moedaPadrao}
+          vazio="Nada nesta competência."
+        />
+      )}
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base capitalize">
-            Faturas de cartão — {formatarCompetencia(competencia)}
-          </CardTitle>
+          <CardTitle className="text-base">Faturas de cartão — {mesLabel}</CardTitle>
         </CardHeader>
         <CardContent>
           {faturas.length === 0 ? (
@@ -132,9 +123,7 @@ export function BalancoDoMes() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base capitalize">
-            Resumo por categoria — {formatarCompetencia(competencia)}
-          </CardTitle>
+          <CardTitle className="text-base">Resumo por categoria — {mesLabel}</CardTitle>
         </CardHeader>
         <CardContent>
           {porCategoria.length === 0 ? (
