@@ -94,7 +94,7 @@ export function AuthPage() {
     <div className="flex min-h-svh items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Planejamento Financeiro</CardTitle>
+          <CardTitle>Tudo em dia</CardTitle>
           <CardDescription>
             {modo === "recuperar" ? "Recupere o acesso à sua conta" : "Entre ou crie sua conta para continuar"}
           </CardDescription>

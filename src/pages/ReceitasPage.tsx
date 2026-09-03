@@ -99,8 +99,11 @@ export function ReceitasPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Receitas — {formatarCompetencia(competencia)}</h1>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">Receitas</h1>
+          <p className="text-sm text-muted-foreground capitalize">{formatarCompetencia(competencia)}</p>
+        </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button onClick={openCreate}>

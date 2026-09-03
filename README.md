@@ -1,4 +1,4 @@
-# 💰 Gestão Mensal & Cartão
+# 💰 Tudo em dia
 
 Aplicação web de planejamento financeiro pessoal: compromissos mensais, cartões de crédito parcelados, categorias, patrimônio e uma visão consolidada de "quanto sobra" por mês — com autenticação completa e dados isolados por usuário.
 

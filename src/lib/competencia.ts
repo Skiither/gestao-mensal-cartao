@@ -3,6 +3,11 @@ const MESES = [
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ]
 
+export const MESES_CURTOS = [
+  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+]
+
 /** Competência no formato 'YYYY-MM'. */
 export type Competencia = string
 
@@ -14,6 +19,23 @@ export function competenciaAtual(): Competencia {
 export function formatarCompetencia(competencia: Competencia): string {
   const [ano, mes] = competencia.split("-").map(Number)
   return `${MESES[mes - 1]}/${ano}`
+}
+
+/** Versão curta ('Set/2026') — para telas estreitas. */
+export function formatarCompetenciaCurta(competencia: Competencia): string {
+  const [ano, mes] = competencia.split("-").map(Number)
+  return `${MESES_CURTOS[mes - 1]}/${ano}`
+}
+
+/** Quebra 'YYYY-MM' em ano e mês (1-12) numéricos. */
+export function partesCompetencia(competencia: Competencia): { ano: number; mes: number } {
+  const [ano, mes] = competencia.split("-").map(Number)
+  return { ano, mes }
+}
+
+/** Monta 'YYYY-MM' a partir de ano e mês (1-12). */
+export function montarCompetencia(ano: number, mes: number): Competencia {
+  return `${ano}-${String(mes).padStart(2, "0")}`
 }
 
 export function competenciaAdjacente(competencia: Competencia, delta: number): Competencia {

@@ -89,6 +89,20 @@ export type Patrimonio = {
   atualizado_em: string
 }
 
+export type TipoItemPatrimonio = "conta" | "guardado" | "investido"
+
+export type PatrimonioItem = {
+  id: string
+  user_id: string
+  tipo: TipoItemPatrimonio
+  nome: string
+  valor: number
+  moeda: Moeda
+  ordem: number
+  created_at: string
+  atualizado_em: string
+}
+
 export type MetaHistorico = {
   id: string
   meta_id: string
@@ -116,6 +130,7 @@ export type Database = {
       parcelas: Table<Parcela, Partial<Parcela> & { compra_parcelada_id: string; numero_parcela: number; competencia: string; valor: number }>
       metas: Table<Meta, Partial<Meta> & { nome: string; valor_desejado: number; user_id: string }>
       patrimonio: Table<Patrimonio, Partial<Patrimonio> & { tipo: TipoPatrimonio; valor: number; moeda: Moeda; user_id: string }>
+      patrimonio_itens: Table<PatrimonioItem, Partial<PatrimonioItem> & { tipo: TipoItemPatrimonio; nome: string; valor: number; moeda: Moeda; user_id: string }>
       metas_historico: Table<MetaHistorico, never>
     }
     Views: Record<string, never>

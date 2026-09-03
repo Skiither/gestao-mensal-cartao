@@ -2,10 +2,11 @@ import { Link } from "react-router-dom"
 import { Wallet, Receipt, AlertCircle, PiggyBank, TrendingUp, Target } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { BalancoDoMes } from "@/components/BalancoDoMes"
 import { useReceitas } from "@/hooks/useReceitas"
 import { useCompromissos } from "@/hooks/useCompromissos"
 import { useParcelasDaCompetencia } from "@/hooks/useComprasParceladas"
-import { moedasNoHistorico, usePatrimonioHistorico, valorAtualPorTipo } from "@/hooks/usePatrimonio"
+import { usePatrimonioItens, totalPorMoeda } from "@/hooks/usePatrimonioItens"
 import { useMetas } from "@/hooks/useMetas"
 import { useCompetencia } from "@/contexts/CompetenciaContext"
 import { useAuth } from "@/contexts/AuthContext"
@@ -29,7 +30,7 @@ export function DashboardPage() {
   const { data: receitas, isLoading: loadingReceitas } = useReceitas(competencia)
   const { data: compromissos, isLoading: loadingCompromissos } = useCompromissos(competencia)
   const { data: parcelas, isLoading: loadingParcelas } = useParcelasDaCompetencia(competencia)
-  const { data: patrimonioHistorico } = usePatrimonioHistorico()
+  const { data: patrimonioItens } = usePatrimonioItens()
   const { data: metas } = useMetas()
 
   const carregando = loadingReceitas || loadingCompromissos || loadingParcelas
@@ -45,13 +46,15 @@ export function DashboardPage() {
 
   const saldo = totalReceitas - totalComprometido
 
-  const moedasPatrimonio = patrimonioHistorico ? moedasNoHistorico(patrimonioHistorico) : []
-  const guardadoPorMoeda = moedasPatrimonio.map((m) => ({
-    moeda: m, valor: valorAtualPorTipo(patrimonioHistorico ?? [], "guardado", m),
-  }))
-  const investidoPorMoeda = moedasPatrimonio.map((m) => ({
-    moeda: m, valor: valorAtualPorTipo(patrimonioHistorico ?? [], "investido", m),
-  }))
+  const itensPatrimonio = patrimonioItens ?? []
+  const saldoGeralPorMoeda = totalPorMoeda(itensPatrimonio, "conta")
+  const guardadoPorMoeda = totalPorMoeda(itensPatrimonio, "guardado")
+  const investidoPorMoeda = totalPorMoeda(itensPatrimonio, "investido")
+  const moedasPatrimonio = Array.from(new Set([
+    ...saldoGeralPorMoeda.map((v) => v.moeda),
+    ...guardadoPorMoeda.map((v) => v.moeda),
+    ...investidoPorMoeda.map((v) => v.moeda),
+  ]))
 
   return (
     <div className="space-y-6">
@@ -99,15 +102,17 @@ export function DashboardPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <ResumoCardMultiMoeda titulo="Saldo geral" valores={saldoGeralPorMoeda} icone={Wallet} tom="primary" to="/patrimonio" />
         <ResumoCardMultiMoeda titulo="Guardado" valores={guardadoPorMoeda} icone={PiggyBank} tom="primary" to="/patrimonio" />
         <ResumoCardMultiMoeda titulo="Investido" valores={investidoPorMoeda} icone={TrendingUp} tom="primary" to="/patrimonio" />
         <ResumoCardMultiMoeda
           titulo="Patrimônio total"
           valores={moedasPatrimonio.map((moeda) => ({
             moeda,
-            valor: (guardadoPorMoeda.find((g) => g.moeda === moeda)?.valor ?? 0)
-              + (investidoPorMoeda.find((i) => i.moeda === moeda)?.valor ?? 0),
+            valor: (saldoGeralPorMoeda.find((v) => v.moeda === moeda)?.valor ?? 0)
+              + (guardadoPorMoeda.find((v) => v.moeda === moeda)?.valor ?? 0)
+              + (investidoPorMoeda.find((v) => v.moeda === moeda)?.valor ?? 0),
           }))}
           icone={PiggyBank}
           tom="primary"
@@ -149,6 +154,11 @@ export function DashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      <div className="space-y-4 pt-2">
+        <h2 className="text-lg font-semibold">Balanço do mês</h2>
+        <BalancoDoMes />
+      </div>
     </div>
   )
 }

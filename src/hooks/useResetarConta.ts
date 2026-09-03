@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext"
 
 /**
  * Apaga todos os dados financeiros do usuário (compromissos, cartões, compras parceladas,
- * parcelas, categorias, receitas, metas, patrimônio), mas preserva a conta de login.
+ * parcelas, categorias, receitas, metas, patrimônio e seus itens), mas preserva a conta de login.
  * `compras_parceladas` e `parcelas` não têm coluna `user_id` própria — a posse é garantida
  * pela política RLS (via join com `cartoes`), então o filtro abaixo só existe para
  * satisfazer a exigência do PostgREST de ao menos um filtro num delete.
@@ -41,6 +41,9 @@ export function useResetarDadosFinanceiros() {
 
       const { error: patrimonioError } = await supabase.from("patrimonio").delete().eq("user_id", user.id)
       if (patrimonioError) throw patrimonioError
+
+      const { error: itensError } = await supabase.from("patrimonio_itens").delete().eq("user_id", user.id)
+      if (itensError) throw itensError
     },
     onSuccess: () => queryClient.invalidateQueries(),
   })

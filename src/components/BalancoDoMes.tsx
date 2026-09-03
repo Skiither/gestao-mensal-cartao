@@ -6,71 +6,19 @@ import { useCompromissos } from "@/hooks/useCompromissos"
 import { useParcelasDaCompetencia } from "@/hooks/useComprasParceladas"
 import { useCategorias } from "@/hooks/useCategorias"
 import { useReceitas } from "@/hooks/useReceitas"
-import { usePatrimonioHistorico } from "@/hooks/usePatrimonio"
-import { useMetasHistorico } from "@/hooks/useMetas"
 import { useCompetencia } from "@/contexts/CompetenciaContext"
 import { useAuth } from "@/contexts/AuthContext"
-import { competenciaDeData, formatarCompetencia } from "@/lib/competencia"
+import { formatarCompetencia } from "@/lib/competencia"
 import { formatarMoeda } from "@/lib/format"
 import { corPorNome } from "@/lib/categoriaColor"
-import { cn } from "@/lib/utils"
-import type { Moeda, Patrimonio, TipoPatrimonio } from "@/types/database"
 
-const NOME_TIPO_PATRIMONIO: Record<TipoPatrimonio, string> = {
-  guardado: "Guardado",
-  investido: "Investido",
-}
-
-type MovimentoPatrimonio = {
-  tipo: TipoPatrimonio
-  moeda: Moeda
-  anterior: number
-  novo: number
-  diferenca: number
-  data: string
-}
-
-export function HistoricoPage() {
+export function BalancoDoMes() {
   const { moedaPadrao } = useAuth()
   const { competencia } = useCompetencia()
   const { data: compromissos, isLoading: loadingCompromissos } = useCompromissos(competencia)
   const { data: parcelas } = useParcelasDaCompetencia(competencia)
   const { data: categorias } = useCategorias()
   const { data: receitas } = useReceitas(competencia)
-  const { data: patrimonioHistorico } = usePatrimonioHistorico()
-  const { data: metasHistorico } = useMetasHistorico()
-
-  const movimentacoesPatrimonio = useMemo(() => {
-    if (!patrimonioHistorico) return []
-    const porGrupo = new Map<string, Patrimonio[]>()
-    for (const registro of patrimonioHistorico) {
-      const chave = `${registro.tipo}|${registro.moeda}`
-      const lista = porGrupo.get(chave) ?? []
-      lista.push(registro)
-      porGrupo.set(chave, lista)
-    }
-    const movimentos: MovimentoPatrimonio[] = []
-    for (const lista of porGrupo.values()) {
-      let anterior = 0
-      for (const registro of lista) {
-        const diferenca = registro.valor - anterior
-        if (diferenca !== 0 && competenciaDeData(registro.atualizado_em) === competencia) {
-          movimentos.push({
-            tipo: registro.tipo, moeda: registro.moeda, anterior, novo: registro.valor, diferenca, data: registro.atualizado_em,
-          })
-        }
-        anterior = registro.valor
-      }
-    }
-    return movimentos.sort((a, b) => a.data.localeCompare(b.data))
-  }, [patrimonioHistorico, competencia])
-
-  const movimentacoesMetas = useMemo(() => {
-    if (!metasHistorico) return []
-    return metasHistorico
-      .filter((h) => h.diferenca !== 0 && competenciaDeData(h.alterado_em) === competencia)
-      .sort((a, b) => a.alterado_em.localeCompare(b.alterado_em))
-  }, [metasHistorico, competencia])
 
   const porCategoria = useMemo(() => {
     const nomeDaCategoria = (id: string | null) => categorias?.find((c) => c.id === id)?.nome ?? "Sem categoria"
@@ -115,8 +63,6 @@ export function HistoricoPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Histórico</h1>
-
       <Card>
         <CardHeader>
           <CardTitle className="text-base capitalize">
@@ -176,86 +122,6 @@ export function HistoricoPage() {
                     <TableCell>{fatura.cartaoNome}</TableCell>
                     <TableCell>{fatura.numCompras}</TableCell>
                     <TableCell className="text-right">{formatarMoeda(fatura.total, moedaPadrao)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base capitalize">
-            Movimentações de patrimônio — {formatarCompetencia(competencia)}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {movimentacoesPatrimonio.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Não houve movimentações de patrimônio neste mês.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>De → Para</TableHead>
-                  <TableHead className="text-right">Diferença</TableHead>
-                  <TableHead className="text-right">Data</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {movimentacoesPatrimonio.map((mov, i) => (
-                  <TableRow key={i}>
-                    <TableCell>{NOME_TIPO_PATRIMONIO[mov.tipo]}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatarMoeda(mov.anterior, mov.moeda)} → {formatarMoeda(mov.novo, mov.moeda)}
-                    </TableCell>
-                    <TableCell className={cn("text-right font-medium", mov.diferenca > 0 ? "text-success" : "text-destructive")}>
-                      {mov.diferenca > 0 ? "+" : ""}{formatarMoeda(mov.diferenca, mov.moeda)}
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      {new Date(mov.data).toLocaleDateString("pt-PT")}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base capitalize">
-            Movimentações de metas — {formatarCompetencia(competencia)}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {movimentacoesMetas.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Não houve movimentações de metas neste mês.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Meta</TableHead>
-                  <TableHead>De → Para</TableHead>
-                  <TableHead className="text-right">Diferença</TableHead>
-                  <TableHead className="text-right">Data</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {movimentacoesMetas.map((mov) => (
-                  <TableRow key={mov.id}>
-                    <TableCell>{mov.metas?.nome ?? "Meta excluída"}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatarMoeda(mov.valor_anterior, mov.metas?.moeda)} → {formatarMoeda(mov.valor_novo, mov.metas?.moeda)}
-                    </TableCell>
-                    <TableCell className={cn("text-right font-medium", mov.diferenca > 0 ? "text-success" : "text-destructive")}>
-                      {mov.diferenca > 0 ? "+" : ""}{formatarMoeda(mov.diferenca, mov.metas?.moeda)}
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      {new Date(mov.alterado_em).toLocaleDateString("pt-PT")}
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

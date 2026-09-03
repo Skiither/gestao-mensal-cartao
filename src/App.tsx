@@ -12,7 +12,7 @@ import { CartaoDetalhePage } from "@/pages/CartaoDetalhePage"
 import { CategoriasPage } from "@/pages/CategoriasPage"
 import { MetasPage } from "@/pages/MetasPage"
 import { PatrimonioPage } from "@/pages/PatrimonioPage"
-import { HistoricoPage } from "@/pages/HistoricoPage"
+import { PerfilPage } from "@/pages/PerfilPage"
 import { ConfiguracoesPage } from "@/pages/ConfiguracoesPage"
 
 function App() {
@@ -33,7 +33,7 @@ function App() {
           <Route path="/categorias" element={<CategoriasPage />} />
           <Route path="/metas" element={<MetasPage />} />
           <Route path="/patrimonio" element={<PatrimonioPage />} />
-          <Route path="/historico" element={<HistoricoPage />} />
+          <Route path="/perfil" element={<PerfilPage />} />
           <Route path="/configuracoes" element={<ConfiguracoesPage />} />
         </Route>
       </Route>

@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { toast } from "sonner"
 import { ChevronDown, ChevronUp, Layers, Pencil, Plus, Trash2 } from "lucide-react"
+import { DivisaoDonut } from "@/components/DivisaoDonut"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -112,6 +113,18 @@ export function CategoriasPage() {
     return grupos
   }, [compromissos])
 
+  const fatiasResumo = useMemo(() => {
+    if (!categorias) return []
+    return categorias
+      .map((cat) => ({
+        nome: cat.nome,
+        cor: corDaCategoria(cat.id, categorias),
+        valor: (porCategoria.get(cat.id) ?? []).reduce((acc, c) => acc + c.valor, 0),
+      }))
+      .filter((f) => f.valor > 0)
+      .sort((a, b) => b.valor - a.valor)
+  }, [categorias, porCategoria])
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -151,6 +164,10 @@ export function CategoriasPage() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {fatiasResumo.length > 0 && (
+        <DivisaoDonut titulo="Divisão por categoria" fatias={fatiasResumo} moeda={moedaPadrao} />
+      )}
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>

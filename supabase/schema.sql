@@ -90,6 +90,21 @@ create table if not exists patrimonio (
   atualizado_em timestamptz default now()
 );
 
+-- Itens de patrimônio: "Minhas contas" (tipo 'conta', soma = saldo geral), "Guardado"
+-- e "Investido", cada um item a item (nome + valor + moeda). Substituiu a antiga tabela
+-- "patrimonio" (que virou legado e o app ignora). Multi-moeda, sem converter.
+create table if not exists patrimonio_itens (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  tipo text not null check (tipo in ('conta','guardado','investido')),
+  nome text not null,
+  valor numeric(12,2) not null default 0,
+  moeda text not null default 'EUR' check (moeda in ('EUR','BRL')),
+  ordem int not null default 0,
+  created_at timestamptz default now(),
+  atualizado_em timestamptz default now()
+);
+
 -- Histórico de movimentações em metas: cada alteração de valor_acumulado (criação
 -- com valor inicial, ou edição) vira uma linha aqui via trigger, para poder mostrar
 -- no Histórico do mês se a pessoa colocou ou tirou dinheiro de alguma meta.
@@ -115,6 +130,7 @@ create index if not exists idx_compras_parceladas_cartao on compras_parceladas(c
 create index if not exists idx_cartoes_user on cartoes(user_id);
 create index if not exists idx_metas_historico_meta on metas_historico(meta_id);
 create index if not exists idx_metas_historico_alterado_em on metas_historico(alterado_em);
+create index if not exists idx_patrimonio_itens_user on patrimonio_itens(user_id);
 
 -- ----------------------------------------------------------------------------
 -- Função + trigger: gerar/regenerar parcelas ao inserir ou editar compra_parcelada
@@ -229,6 +245,7 @@ alter table compras_parceladas enable row level security;
 alter table parcelas enable row level security;
 alter table metas enable row level security;
 alter table patrimonio enable row level security;
+alter table patrimonio_itens enable row level security;
 alter table metas_historico enable row level security;
 
 -- Tabelas com user_id direto: policy simples auth.uid() = user_id
@@ -249,6 +266,9 @@ create policy "metas_owner" on metas
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "patrimonio_owner" on patrimonio
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create policy "patrimonio_itens_owner" on patrimonio_itens
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- Tabelas filhas (sem user_id próprio): dono verificado via join

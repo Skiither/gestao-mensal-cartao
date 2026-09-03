@@ -1,4 +1,4 @@
-import { useState, type MouseEvent } from "react"
+import { useMemo, useState, type MouseEvent } from "react"
 import { Link } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -13,10 +13,16 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ConfirmDialog } from "@/components/ConfirmDialog"
+import { DivisaoDonut } from "@/components/DivisaoDonut"
 import { useCartoes, useCreateCartao, useUpdateCartao, useDeleteCartao } from "@/hooks/useCartoes"
-import { useQuantidadeComprasAtivasPorCartao, useTotalPendentePorCartao } from "@/hooks/useComprasParceladas"
+import {
+  useParcelasDaCompetencia, useQuantidadeComprasAtivasPorCartao, useTotalPendentePorCartao,
+} from "@/hooks/useComprasParceladas"
 import { useAuth } from "@/contexts/AuthContext"
+import { useCompetencia } from "@/contexts/CompetenciaContext"
+import { formatarCompetencia, formatarCompetenciaCurta } from "@/lib/competencia"
 import { formatarMoeda } from "@/lib/format"
+import { cn } from "@/lib/utils"
 import type { Cartao } from "@/types/database"
 
 const schema = z.object({
@@ -29,10 +35,15 @@ const schema = z.object({
 type FormValues = z.output<typeof schema>
 type FormInput = z.input<typeof schema>
 
+// Cores da rosca de cartões — por posição, não por nome (cartão não tem cor fixa no resto do app).
+const CORES_CARTAO = ["#2a78d6", "#e34948", "#eda100", "#1baf7a", "#8a5cf6", "#e87ba4", "#0ca30c"]
+
 export function CartoesPage() {
   const { moedaPadrao } = useAuth()
+  const { competencia } = useCompetencia()
   const { data: cartoes, isLoading } = useCartoes()
   const { data: totalPendentePorCartao } = useTotalPendentePorCartao()
+  const { data: parcelasMes } = useParcelasDaCompetencia(competencia)
   const { data: quantidadeComprasPorCartao } = useQuantidadeComprasAtivasPorCartao()
   const createMutation = useCreateCartao()
   const updateMutation = useUpdateCartao()
@@ -40,6 +51,42 @@ export function CartoesPage() {
 
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Cartao | null>(null)
+  const [visao, setVisao] = useState<"mes" | "total">("mes")
+
+  // Cor fixa por cartão (mesma nas duas visões), pela posição na lista.
+  const corDoCartao = useMemo(() => {
+    const m = new Map<string, string>()
+    ;(cartoes ?? []).forEach((c, i) => m.set(c.id, CORES_CARTAO[i % CORES_CARTAO.length]))
+    return m
+  }, [cartoes])
+
+  // "Total": tudo que ainda falta pagar somando todos os meses.
+  const fatiasTotal = useMemo(() => {
+    if (!cartoes) return []
+    return cartoes
+      .map((c) => ({ nome: c.nome, valor: totalPendentePorCartao?.get(c.id) ?? 0, cor: corDoCartao.get(c.id)! }))
+      .filter((f) => f.valor > 0)
+      .sort((a, b) => b.valor - a.valor)
+  }, [cartoes, totalPendentePorCartao, corDoCartao])
+
+  // "Mês": fatura de cada cartão na competência selecionada.
+  const fatiasMes = useMemo(() => {
+    if (!cartoes || !parcelasMes) return []
+    const porCartao = new Map<string, number>()
+    for (const p of parcelasMes) {
+      const id = p.compras_parceladas?.cartao_id
+      if (!id) continue
+      porCartao.set(id, (porCartao.get(id) ?? 0) + p.valor)
+    }
+    return cartoes
+      .map((c) => ({ nome: c.nome, valor: porCartao.get(c.id) ?? 0, cor: corDoCartao.get(c.id)! }))
+      .filter((f) => f.valor > 0)
+      .sort((a, b) => b.valor - a.valor)
+  }, [cartoes, parcelasMes, corDoCartao])
+
+  const fatias = visao === "mes" ? fatiasMes : fatiasTotal
+  // Rosca só aparece a partir de 2 cartões cadastrados e havendo algo pra dividir.
+  const mostrarGrafico = (cartoes?.length ?? 0) >= 2 && (fatiasTotal.length > 0 || fatiasMes.length > 0)
 
   const form = useForm<FormInput, unknown, FormValues>({
     resolver: zodResolver(schema),
@@ -169,6 +216,43 @@ export function CartoesPage() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {mostrarGrafico && (
+        <DivisaoDonut
+          titulo="Divisão por cartão"
+          fatias={fatias}
+          moeda={moedaPadrao}
+          vazio={
+            visao === "mes"
+              ? `Nada a pagar nos cartões em ${formatarCompetencia(competencia)}.`
+              : "Nenhuma fatura em aberto."
+          }
+          acao={
+            <div className="flex shrink-0 rounded-md border p-0.5">
+              <button
+                type="button"
+                onClick={() => setVisao("mes")}
+                className={cn(
+                  "rounded px-2 py-1 text-xs font-medium capitalize transition-colors",
+                  visao === "mes" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {formatarCompetenciaCurta(competencia)}
+              </button>
+              <button
+                type="button"
+                onClick={() => setVisao("total")}
+                className={cn(
+                  "rounded px-2 py-1 text-xs font-medium transition-colors",
+                  visao === "total" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Total
+              </button>
+            </div>
+          }
+        />
+      )}
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
