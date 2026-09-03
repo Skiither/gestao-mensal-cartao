@@ -80,7 +80,7 @@ export function MetasPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <h1 className="font-heading text-[clamp(1.9rem,4vw,2.6rem)] font-normal leading-[1.05] tracking-tight">Metas</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>

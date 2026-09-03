@@ -139,7 +139,7 @@ export function CompromissosPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <div>
           <h1 className="font-heading text-[clamp(1.9rem,4vw,2.6rem)] font-normal leading-[1.05] tracking-tight">Compromissos</h1>
           <p className="mt-1.5 text-sm text-muted-foreground">{formatarCompetencia(competencia)}</p>
