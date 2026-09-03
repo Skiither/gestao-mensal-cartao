@@ -124,6 +124,11 @@ export function CompromissosPage() {
     return mapa
   }, [parcelas])
 
+  const totalComprometido = (compromissos?.reduce((acc, c) => acc + c.valor, 0) ?? 0)
+    + (parcelas?.reduce((acc, p) => acc + p.valor, 0) ?? 0)
+  const totalPendente = (compromissos?.filter((c) => c.status === "pendente").reduce((acc, c) => acc + c.valor, 0) ?? 0)
+    + (parcelas?.filter((p) => p.status === "pendente").reduce((acc, p) => acc + p.valor, 0) ?? 0)
+
   async function onToggleParcela(parcelaId: string, pago: boolean) {
     try {
       await marcarParcelaPagaMutation.mutateAsync({ id: parcelaId, status: pago ? "pago" : "pendente" })
@@ -246,6 +251,17 @@ export function CompromissosPage() {
             </Form>
           </DialogContent>
         </Dialog>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="rounded-lg border border-border bg-card px-4 pt-3.5 pb-4">
+          <div className="font-mono text-[0.66rem] font-medium tracking-[0.12em] text-muted-foreground uppercase">Total comprometido</div>
+          <p className="mt-2 font-mono text-2xl tabular-nums tracking-tight text-warning">{formatarMoeda(totalComprometido, moedaPadrao)}</p>
+        </div>
+        <div className="rounded-lg border border-border bg-card px-4 pt-3.5 pb-4">
+          <div className="font-mono text-[0.66rem] font-medium tracking-[0.12em] text-muted-foreground uppercase">Ainda falta pagar</div>
+          <p className="mt-2 font-mono text-2xl tabular-nums tracking-tight text-destructive">{formatarMoeda(totalPendente, moedaPadrao)}</p>
+        </div>
       </div>
 
       {isLoading ? (
