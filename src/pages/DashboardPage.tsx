@@ -102,7 +102,7 @@ export function DashboardPage() {
         <ResumoCardMultiMoeda titulo="Guardado" valores={guardadoPorMoeda} tom="primary" to="/patrimonio" />
         <ResumoCardMultiMoeda titulo="Investido" valores={investidoPorMoeda} tom="primary" to="/patrimonio" />
         <ResumoCardMultiMoeda
-          titulo="Patrimônio total"
+          titulo="Património total"
           valores={moedasPatrimonio.map((moeda) => ({
             moeda,
             valor: (saldoGeralPorMoeda.find((v) => v.moeda === moeda)?.valor ?? 0)

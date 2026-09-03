@@ -77,7 +77,7 @@ export function PatrimonioPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="font-mono text-xs font-medium tracking-wider text-muted-foreground uppercase">Patrimônio total</CardTitle>
+            <CardTitle className="font-mono text-xs font-medium tracking-wider text-muted-foreground uppercase">Património total</CardTitle>
           </CardHeader>
           <CardContent>
             {patrimonioTotal.length === 0 ? (

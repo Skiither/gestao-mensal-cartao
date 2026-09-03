@@ -136,10 +136,14 @@
   * {
     @apply border-border outline-ring/50;
     }
-  body {
-    @apply bg-background text-foreground;
-    }
   html {
-    @apply font-sans;
+    @apply bg-background font-sans;
+    /* pinta a área de "elástico" (overscroll) no celular com a cor do tema,
+       em vez de mostrar o vazio escuro atrás do app */
+    overscroll-behavior-y: none;
+    }
+  body {
+    @apply min-h-svh bg-background text-foreground;
+    overscroll-behavior-y: none;
     }
 }
