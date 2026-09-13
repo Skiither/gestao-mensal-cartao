@@ -85,7 +85,7 @@ export function CompromissoCategoriaPainel({
     const input = values
     try {
       if (editing) {
-        await updateMutation.mutateAsync({ id: editing.id, ...input })
+        await updateMutation.mutateAsync({ original: editing, ...input })
         toast.success("Compromisso atualizado")
       } else {
         await createMutation.mutateAsync(input)
@@ -97,10 +97,10 @@ export function CompromissoCategoriaPainel({
     }
   }
 
-  async function onDelete(id: string) {
+  async function onDelete(compromisso: CompromissoFinanceiro, escopo: "unico" | "futuros") {
     try {
-      await deleteMutation.mutateAsync(id)
-      toast.success("Compromisso excluído")
+      await deleteMutation.mutateAsync({ compromisso, escopo })
+      toast.success(escopo === "futuros" ? "Compromisso excluído (este mês e os seguintes)" : "Compromisso excluído")
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao excluir compromisso")
     }
@@ -269,16 +269,32 @@ export function CompromissoCategoriaPainel({
                   <Button variant="ghost" size="icon" onClick={() => openEdit(compromisso)} aria-label="Editar">
                     <Pencil className="size-4" />
                   </Button>
-                  <ConfirmDialog
-                    title="Excluir compromisso?"
-                    description={`Isso vai excluir "${compromisso.nome}" permanentemente.`}
-                    onConfirm={() => onDelete(compromisso.id)}
-                    trigger={
-                      <Button variant="ghost" size="icon" aria-label="Excluir">
-                        <Trash2 className="size-4" />
-                      </Button>
-                    }
-                  />
+                  {compromisso.recorrencia === "recorrente" ? (
+                    <ConfirmDialog
+                      title="Excluir compromisso recorrente?"
+                      description={`"${compromisso.nome}" se repete todo mês. Excluir só este mês, ou este e todos os seguintes (o histórico de meses anteriores não é afetado)?`}
+                      confirmLabel="Excluir este e os seguintes"
+                      onConfirm={() => onDelete(compromisso, "futuros")}
+                      secondaryLabel="Excluir só este mês"
+                      onSecondary={() => onDelete(compromisso, "unico")}
+                      trigger={
+                        <Button variant="ghost" size="icon" aria-label="Excluir">
+                          <Trash2 className="size-4" />
+                        </Button>
+                      }
+                    />
+                  ) : (
+                    <ConfirmDialog
+                      title="Excluir compromisso?"
+                      description={`Isso vai excluir "${compromisso.nome}" permanentemente.`}
+                      onConfirm={() => onDelete(compromisso, "unico")}
+                      trigger={
+                        <Button variant="ghost" size="icon" aria-label="Excluir">
+                          <Trash2 className="size-4" />
+                        </Button>
+                      }
+                    />
+                  )}
                 </TableCell>
               </TableRow>
             ))}

@@ -13,10 +13,17 @@ interface ConfirmDialogProps {
   description: string
   confirmLabel?: string
   onConfirm: () => void
+  /** Segunda ação destrutiva opcional (ex: "Excluir só este mês" ao lado de "Excluir série"). */
+  secondaryLabel?: string
+  onSecondary?: () => void
 }
 
-/** Confirmação antes de uma ação destrutiva (excluir). */
-export function ConfirmDialog({ trigger, title, description, confirmLabel = "Excluir", onConfirm }: ConfirmDialogProps) {
+/** Confirmação antes de uma ação destrutiva (excluir). Suporta uma segunda ação opcional
+ *  quando a exclusão tem mais de um alcance possível (ex: um mês vs. a série recorrente
+ *  inteira). */
+export function ConfirmDialog({
+  trigger, title, description, confirmLabel = "Excluir", onConfirm, secondaryLabel, onSecondary,
+}: ConfirmDialogProps) {
   const [open, setOpen] = useState(false)
 
   const triggerComEstado = cloneElement(trigger, {
@@ -37,6 +44,9 @@ export function ConfirmDialog({ trigger, title, description, confirmLabel = "Exc
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            {secondaryLabel && onSecondary && (
+              <AlertDialogAction variant="outline" onClick={onSecondary}>{secondaryLabel}</AlertDialogAction>
+            )}
             <AlertDialogAction variant="destructive" onClick={onConfirm}>{confirmLabel}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -21,8 +21,9 @@ import {
 import { useTodosCompromissos } from "@/hooks/useCompromissos"
 import { formatarMoeda } from "@/lib/format"
 import { useAuth } from "@/contexts/AuthContext"
+import { useCompetencia } from "@/contexts/CompetenciaContext"
 import { corDaCategoria } from "@/lib/categoriaColor"
-import type { Categoria } from "@/types/database"
+import type { Categoria, CompromissoFinanceiro } from "@/types/database"
 
 const schema = z.object({ nome: z.string().min(1, "Informe um nome") })
 type FormValues = z.infer<typeof schema>
@@ -33,6 +34,7 @@ function hojeISO() {
 
 export function CategoriasPage() {
   const { moedaPadrao } = useAuth()
+  const { competencia } = useCompetencia()
   const { data: categorias, isLoading } = useCategorias()
   const { data: compromissos, isLoading: isLoadingCompromissos } = useTodosCompromissos()
   const createMutation = useCreateCategoria()
@@ -93,25 +95,44 @@ export function CategoriasPage() {
 
   const porCategoria = useMemo(() => {
     // `compromissos` já vem ordenado por competência decrescente. Para recorrentes, cada mês
-    // gera uma linha própria — aqui só interessa a mais recente de cada série (a gestão fica
-    // em Compromissos, mês a mês); eventuais aparecem todos, cada um é um lançamento distinto.
-    const seriesVistas = new Set<string>()
+    // gera uma linha própria — aqui só interessa UMA por série (a gestão mês a mês fica em
+    // Compromissos), mas precisa ser a linha "atual": a de competência mais próxima da
+    // selecionada no seletor de mês, preferindo presente/futuro sobre passado. Escolher
+    // sempre "a mais recente que existe" quebra a edição quando a série já foi gerada bem
+    // além do mês atual (ex: navegar o seletor pra frente gera linhas futuras) — editar essa
+    // linha distante não reflete no mês corrente. Eventuais aparecem todos, cada um é um
+    // lançamento distinto.
+    const candidatoPorSerie = new Map<string, CompromissoFinanceiro>()
+    for (const c of compromissos ?? []) {
+      if (c.recorrencia !== "recorrente") continue
+      // serie_id pode ainda não existir no banco (migração pendente) — nesse caso cai pro
+      // próprio id, tratando cada linha como série única em vez de colapsar tudo junto.
+      const chaveSerie = c.serie_id ?? c.id
+      const atual = candidatoPorSerie.get(chaveSerie)
+      if (!atual) {
+        candidatoPorSerie.set(chaveSerie, c)
+        continue
+      }
+      const atualEhFuturoOuAtual = atual.competencia >= competencia
+      const cEhFuturoOuAtual = c.competencia >= competencia
+      if (cEhFuturoOuAtual && (!atualEhFuturoOuAtual || c.competencia < atual.competencia)) {
+        candidatoPorSerie.set(chaveSerie, c) // mais perto do presente/futuro que o candidato atual
+      } else if (!cEhFuturoOuAtual && !atualEhFuturoOuAtual && c.competencia > atual.competencia) {
+        candidatoPorSerie.set(chaveSerie, c) // nenhum dos dois chegou no presente ainda: fica com o mais recente do passado
+      }
+    }
+    const representantes = new Set(candidatoPorSerie.values())
+
     const grupos = new Map<string, NonNullable<typeof compromissos>>()
     for (const c of compromissos ?? []) {
       if (!c.categoria_id) continue
-      if (c.recorrencia === "recorrente") {
-        // serie_id pode ainda não existir no banco (migração pendente) — nesse caso cai pro
-        // próprio id, tratando cada linha como série única em vez de colapsar tudo junto.
-        const chaveSerie = c.serie_id ?? c.id
-        if (seriesVistas.has(chaveSerie)) continue
-        seriesVistas.add(chaveSerie)
-      }
+      if (c.recorrencia === "recorrente" && !representantes.has(c)) continue
       const lista = grupos.get(c.categoria_id) ?? []
       lista.push(c)
       grupos.set(c.categoria_id, lista)
     }
     return grupos
-  }, [compromissos])
+  }, [compromissos, competencia])
 
   const fatiasResumo = useMemo(() => {
     if (!categorias) return []

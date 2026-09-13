@@ -138,27 +138,77 @@ export function useCreateCompromisso() {
   })
 }
 
+/**
+ * Edita um compromisso. Se ele for recorrente (e já tiver `serie_id`), a edição também é
+ * propagada para as linhas já existentes da mesma série a partir da competência original
+ * (inclusive) em diante — nome, valor, categoria e o "dia" de vencimento (preservando a
+ * competência de cada linha). Meses **anteriores** à linha editada nunca são tocados aqui:
+ * só mudam se o usuário for lá e editar aquele mês diretamente. `status` (pago/pendente) de
+ * cada linha também não é tocado pela propagação.
+ */
 export function useUpdateCompromisso() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ id, ...input }: CompromissoInput & { id: string }) => {
+    mutationFn: async (
+      { original, ...input }: CompromissoInput & { original: CompromissoFinanceiro }
+    ) => {
       const { error } = await supabase
         .from("compromissos_financeiros")
         .update({ ...input, competencia: competenciaDoVencimento(input.vencimento) })
-        .eq("id", id)
+        .eq("id", original.id)
       if (error) throw error
+
+      if (original.recorrencia === "recorrente" && original.serie_id) {
+        const { data: futuras, error: fetchError } = await supabase
+          .from("compromissos_financeiros")
+          .select("id, competencia")
+          .eq("serie_id", original.serie_id)
+          .neq("id", original.id)
+          .gte("competencia", original.competencia)
+        if (fetchError) throw fetchError
+
+        for (const futura of (futuras ?? []) as Array<{ id: string; competencia: string }>) {
+          const { error: propagarError } = await supabase
+            .from("compromissos_financeiros")
+            .update({
+              nome: input.nome,
+              valor: input.valor,
+              categoria_id: input.categoria_id,
+              vencimento: diaDoMesClamped(input.vencimento, futura.competencia),
+            })
+            .eq("id", futura.id)
+          if (propagarError) throw propagarError
+        }
+      }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
   })
 }
 
+/**
+ * Exclui um compromisso. Para um recorrente, `escopo: "futuros"` também apaga as linhas já
+ * geradas da mesma série a partir da competência dessa linha (inclusive) em diante — meses
+ * anteriores (já pagos/históricos) nunca são tocados, o mesmo critério usado na propagação de
+ * edição em `useUpdateCompromisso`.
+ */
 export function useDeleteCompromisso() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("compromissos_financeiros").delete().eq("id", id)
+    mutationFn: async (
+      { compromisso, escopo }: { compromisso: CompromissoFinanceiro; escopo: "unico" | "futuros" }
+    ) => {
+      if (escopo === "futuros" && compromisso.recorrencia === "recorrente" && compromisso.serie_id) {
+        const { error } = await supabase
+          .from("compromissos_financeiros")
+          .delete()
+          .eq("serie_id", compromisso.serie_id)
+          .gte("competencia", compromisso.competencia)
+        if (error) throw error
+        return
+      }
+      const { error } = await supabase.from("compromissos_financeiros").delete().eq("id", compromisso.id)
       if (error) throw error
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
