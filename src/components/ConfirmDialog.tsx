@@ -37,7 +37,7 @@ export function ConfirmDialog({
     <>
       {triggerComEstado}
       <AlertDialog open={open} onOpenChange={setOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent onOverlayClick={() => setOpen(false)}>
           <AlertDialogHeader>
             <AlertDialogTitle>{title}</AlertDialogTitle>
             <AlertDialogDescription>{description}</AlertDialogDescription>

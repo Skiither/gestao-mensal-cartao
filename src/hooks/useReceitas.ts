@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/AuthContext"
 import type { Receita, TipoReceita } from "@/types/database"
-import { competenciaAdjacente, type Competencia } from "@/lib/competencia"
+import { competenciaAdjacente, proximaCompetencia, type Competencia } from "@/lib/competencia"
 
 const KEY = ["receitas"]
 
@@ -132,29 +132,75 @@ function fimDoMesAnterior(competencia: Competencia): string {
   return `${anterior}-${String(new Date(ano, mes, 0).getDate()).padStart(2, "0")}`
 }
 
+/** Mesmo dia do mês de `dataISO`, na competência alvo (limitado ao último dia do mês). */
+function mesmoDiaEm(dataISO: string, competencia: Competencia): string {
+  const dia = Number(dataISO.split("-")[2])
+  const [ano, mes] = competencia.split("-").map(Number)
+  const ultimoDia = new Date(ano, mes, 0).getDate()
+  return `${competencia}-${String(Math.min(dia, ultimoDia)).padStart(2, "0")}`
+}
+
 /**
- * Exclui uma receita. Se for recorrente, apaga só da competência atual em diante: fecha a
- * linha no fim do mês anterior (valido_ate) em vez de apagá-la, para os meses passados
- * continuarem mostrando a receita. Se a linha começou nesta competência (ou depois), não
- * há passado a preservar e ela é apagada de vez. Versões posteriores da mesma receita
- * (mesmo nome, criadas por edições de valor) também são apagadas.
+ * Exclui uma receita. Para uma recorrente há dois alcances:
+ * - `futuros`: apaga da competência atual em diante. A linha é fechada no fim do mês anterior
+ *   (valido_ate) em vez de apagada, para os meses passados continuarem mostrando a receita;
+ *   se ela começou nesta competência (ou depois), é apagada de vez. Versões posteriores da
+ *   mesma receita (mesmo nome, criadas por edições de valor) também são apagadas.
+ * - `unico`: apaga só a competência atual. A linha é fechada no mês anterior e, se ainda valia
+ *   depois, uma cópia recomeça no mês seguinte com o mesmo valor e a mesma validade.
  */
 export function useDeleteReceita() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ receita, competencia }: { receita: Receita; competencia: Competencia }) => {
-      if (receita.recorrente) {
+    mutationFn: async (
+      { receita, competencia, escopo = "futuros" }:
+        { receita: Receita; competencia: Competencia; escopo?: "unico" | "futuros" }
+    ) => {
+      if (receita.tipo === "recorrente" || receita.recorrente) {
         const inicioMes = `${competencia}-01`
+        const [ano, mes] = competencia.split("-").map(Number)
+        const fimMes = `${competencia}-${String(new Date(ano, mes, 0).getDate()).padStart(2, "0")}`
+        const proxima = proximaCompetencia(competencia)
 
-        const { error: posterioresError } = await supabase
-          .from("receitas")
-          .delete()
-          .eq("recorrente", true)
-          .eq("nome", receita.nome)
-          .gt("data", receita.data)
-          .gte("data", inicioMes)
-        if (posterioresError) throw posterioresError
+        if (escopo === "unico" && !(receita.valido_ate && receita.valido_ate <= fimMes)) {
+          // A receita continua valendo depois deste mês: precisa "pular" só este.
+          if (receita.data >= inicioMes) {
+            const { error } = await supabase
+              .from("receitas")
+              .update({ data: mesmoDiaEm(receita.data, proxima) })
+              .eq("id", receita.id)
+            if (error) throw error
+          } else {
+            const { error } = await supabase
+              .from("receitas")
+              .update({ valido_ate: fimDoMesAnterior(competencia) })
+              .eq("id", receita.id)
+            if (error) throw error
+            const { error: insertError } = await supabase.from("receitas").insert({
+              nome: receita.nome,
+              valor: receita.valor,
+              tipo: receita.tipo,
+              recorrente: true,
+              data: mesmoDiaEm(receita.data, proxima),
+              valido_ate: receita.valido_ate,
+              user_id: receita.user_id,
+            })
+            if (insertError) throw insertError
+          }
+          return
+        }
+
+        if (escopo === "futuros") {
+          const { error: posterioresError } = await supabase
+            .from("receitas")
+            .delete()
+            .eq("recorrente", true)
+            .eq("nome", receita.nome)
+            .gt("data", receita.data)
+            .gte("data", inicioMes)
+          if (posterioresError) throw posterioresError
+        }
 
         if (receita.data < inicioMes) {
           const { error } = await supabase

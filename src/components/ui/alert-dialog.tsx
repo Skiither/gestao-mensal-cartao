@@ -50,13 +50,16 @@ function AlertDialogContent({
   className,
   size = "default",
   onClick,
+  onOverlayClick,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
   size?: "default" | "sm"
+  /** Chamado ao clicar fora da caixa (o Radix não fecha AlertDialog sozinho nesse caso). */
+  onOverlayClick?: () => void
 }) {
   return (
     <AlertDialogPortal>
-      <AlertDialogOverlay />
+      <AlertDialogOverlay onClick={onOverlayClick} />
       <AlertDialogPrimitive.Content
         data-slot="alert-dialog-content"
         data-size={size}

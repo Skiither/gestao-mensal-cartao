@@ -86,10 +86,12 @@ export function ReceitasPage() {
     }
   }
 
-  async function onDelete(receita: Receita) {
+  async function onDelete(receita: Receita, escopo: "unico" | "futuros") {
     try {
-      await deleteMutation.mutateAsync({ receita, competencia })
-      toast.success(receita.recorrente ? "Receita excluída a partir deste mês" : "Receita excluída")
+      await deleteMutation.mutateAsync({ receita, competencia, escopo })
+      toast.success(
+        receita.tipo === "recorrente" && escopo === "futuros" ? "Receita excluída (este mês e os seguintes)" : "Receita excluída"
+      )
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao excluir receita")
     }
@@ -224,20 +226,32 @@ export function ReceitasPage() {
                       <Button variant="ghost" size="icon" onClick={() => openEdit(receita)} aria-label="Editar">
                         <Pencil className="size-4" />
                       </Button>
-                      <ConfirmDialog
-                        title="Excluir receita?"
-                        description={
-                          receita.recorrente
-                            ? `Isso vai excluir "${receita.nome}" deste mês em diante. Meses anteriores não mudam.`
-                            : `Isso vai excluir "${receita.nome}" permanentemente.`
-                        }
-                        onConfirm={() => onDelete(receita)}
-                        trigger={
-                          <Button variant="ghost" size="icon" aria-label="Excluir">
-                            <Trash2 className="size-4" />
-                          </Button>
-                        }
-                      />
+                      {receita.tipo === "recorrente" ? (
+                        <ConfirmDialog
+                          title="Excluir receita?"
+                          description={`"${receita.nome}" se repete todo mês. Excluir só este mês, ou este e todos os seguintes (o histórico de meses anteriores não é afetado)?`}
+                          confirmLabel="Excluir este e os seguintes"
+                          onConfirm={() => onDelete(receita, "futuros")}
+                          secondaryLabel="Excluir só este mês"
+                          onSecondary={() => onDelete(receita, "unico")}
+                          trigger={
+                            <Button variant="ghost" size="icon" aria-label="Excluir">
+                              <Trash2 className="size-4" />
+                            </Button>
+                          }
+                        />
+                      ) : (
+                        <ConfirmDialog
+                          title="Excluir receita?"
+                          description={`Isso vai excluir "${receita.nome}" permanentemente.`}
+                          onConfirm={() => onDelete(receita, "unico")}
+                          trigger={
+                            <Button variant="ghost" size="icon" aria-label="Excluir">
+                              <Trash2 className="size-4" />
+                            </Button>
+                          }
+                        />
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
