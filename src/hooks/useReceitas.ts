@@ -88,15 +88,35 @@ export function useEditarReceitaRecorrente() {
       const ultimoDiaMesAnterior = new Date(anoAnt, mesAnt, 0).getDate()
       const validoAte = `${mesAnterior}-${String(ultimoDiaMesAnterior).padStart(2, "0")}`
 
+      const { data: original, error: fetchError } = await supabase
+        .from("receitas")
+        .select("data, valido_ate")
+        .eq("id", id)
+        .single()
+      if (fetchError) throw fetchError
+
+      // A linha começou nesta competência (ou depois): não há passado a preservar, edita no lugar.
+      if (original.data >= `${competenciaEfetiva}-01`) {
+        const { error } = await supabase
+          .from("receitas")
+          .update({ ...input, data: `${competenciaEfetiva}-01` })
+          .eq("id", id)
+        if (error) throw error
+        return
+      }
+
       const { error: fecharError } = await supabase
         .from("receitas")
         .update({ valido_ate: validoAte })
         .eq("id", id)
       if (fecharError) throw fecharError
 
+      // Preserva o fim de validade original (linha já fechada por outra edição) pra não
+      // estender a nova versão por cima de meses que pertencem a versões posteriores.
       const { error: insertError } = await supabase.from("receitas").insert({
         ...input,
         data: `${competenciaEfetiva}-01`,
+        valido_ate: original.valido_ate,
         user_id: user.id,
       })
       if (insertError) throw insertError
@@ -105,12 +125,47 @@ export function useEditarReceitaRecorrente() {
   })
 }
 
+/** Último dia do mês anterior à competência, como 'YYYY-MM-DD'. */
+function fimDoMesAnterior(competencia: Competencia): string {
+  const anterior = competenciaAdjacente(competencia, -1)
+  const [ano, mes] = anterior.split("-").map(Number)
+  return `${anterior}-${String(new Date(ano, mes, 0).getDate()).padStart(2, "0")}`
+}
+
+/**
+ * Exclui uma receita. Se for recorrente, apaga só da competência atual em diante: fecha a
+ * linha no fim do mês anterior (valido_ate) em vez de apagá-la, para os meses passados
+ * continuarem mostrando a receita. Se a linha começou nesta competência (ou depois), não
+ * há passado a preservar e ela é apagada de vez. Versões posteriores da mesma receita
+ * (mesmo nome, criadas por edições de valor) também são apagadas.
+ */
 export function useDeleteReceita() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("receitas").delete().eq("id", id)
+    mutationFn: async ({ receita, competencia }: { receita: Receita; competencia: Competencia }) => {
+      if (receita.recorrente) {
+        const inicioMes = `${competencia}-01`
+
+        const { error: posterioresError } = await supabase
+          .from("receitas")
+          .delete()
+          .eq("recorrente", true)
+          .eq("nome", receita.nome)
+          .gt("data", receita.data)
+          .gte("data", inicioMes)
+        if (posterioresError) throw posterioresError
+
+        if (receita.data < inicioMes) {
+          const { error } = await supabase
+            .from("receitas")
+            .update({ valido_ate: fimDoMesAnterior(competencia) })
+            .eq("id", receita.id)
+          if (error) throw error
+          return
+        }
+      }
+      const { error } = await supabase.from("receitas").delete().eq("id", receita.id)
       if (error) throw error
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),

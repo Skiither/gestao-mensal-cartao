@@ -86,10 +86,10 @@ export function ReceitasPage() {
     }
   }
 
-  async function onDelete(id: string) {
+  async function onDelete(receita: Receita) {
     try {
-      await deleteMutation.mutateAsync(id)
-      toast.success("Receita excluída")
+      await deleteMutation.mutateAsync({ receita, competencia })
+      toast.success(receita.recorrente ? "Receita excluída a partir deste mês" : "Receita excluída")
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao excluir receita")
     }
@@ -226,8 +226,12 @@ export function ReceitasPage() {
                       </Button>
                       <ConfirmDialog
                         title="Excluir receita?"
-                        description={`Isso vai excluir "${receita.nome}" permanentemente.`}
-                        onConfirm={() => onDelete(receita.id)}
+                        description={
+                          receita.recorrente
+                            ? `Isso vai excluir "${receita.nome}" deste mês em diante. Meses anteriores não mudam.`
+                            : `Isso vai excluir "${receita.nome}" permanentemente.`
+                        }
+                        onConfirm={() => onDelete(receita)}
                         trigger={
                           <Button variant="ghost" size="icon" aria-label="Excluir">
                             <Trash2 className="size-4" />
