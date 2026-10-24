@@ -112,6 +112,32 @@ export type MetaHistorico = {
   alterado_em: string
 }
 
+export type WhatsappVinculo = {
+  telefone: string
+  user_id: string
+  criado_em: string
+}
+
+export type WhatsappCodigo = {
+  user_id: string
+  codigo: string
+  expira_em: string
+}
+
+export type WhatsappConversa = {
+  telefone: string
+  etapa: string
+  rascunho: Record<string, unknown> | null
+  tentativas_codigo: number
+  bloqueado_ate: string | null
+  atualizado_em: string
+}
+
+export type WhatsappMensagem = {
+  id: string
+  recebida_em: string
+}
+
 type Table<Row, Insert> = {
   Row: Row
   Insert: Insert
@@ -132,6 +158,10 @@ export type Database = {
       patrimonio: Table<Patrimonio, Partial<Patrimonio> & { tipo: TipoPatrimonio; valor: number; moeda: Moeda; user_id: string }>
       patrimonio_itens: Table<PatrimonioItem, Partial<PatrimonioItem> & { tipo: TipoItemPatrimonio; nome: string; valor: number; moeda: Moeda; user_id: string }>
       metas_historico: Table<MetaHistorico, never>
+      whatsapp_vinculos: Table<WhatsappVinculo, Partial<WhatsappVinculo> & { telefone: string; user_id: string }>
+      whatsapp_codigos: Table<WhatsappCodigo, WhatsappCodigo>
+      whatsapp_conversas: Table<WhatsappConversa, Partial<WhatsappConversa> & { telefone: string }>
+      whatsapp_mensagens: Table<WhatsappMensagem, Partial<WhatsappMensagem> & { id: string }>
     }
     Views: Record<string, never>
     Functions: Record<string, never>

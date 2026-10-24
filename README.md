@@ -36,6 +36,7 @@ E resolver um problema sutil de UX financeiro: se hoje é dia 20 de agosto e eu 
 - **Zona de risco** — reset de dados financeiros com dupla confirmação (senha + "tem certeza?"), mantendo a conta de login intacta.
 - **Responsivo** — menu hambúrguer no mobile, layout adaptado para telas pequenas.
 - **Tema claro/escuro** — com persistência de preferência do sistema.
+- **Bot do WhatsApp** — cada usuário conecta o número em Configurações e lança gastos, receitas e contas, ou consulta faturas e a sobra do mês, por mensagem. Configuração em [`docs/whatsapp-bot.md`](./docs/whatsapp-bot.md).
 
 ## 🧠 Decisões de arquitetura e domínio
 

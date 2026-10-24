@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { WhatsappCard } from "@/components/WhatsappCard"
 
 const perfilSchema = z.object({
   nomeCompleto: z.string().min(1, "Informe seu nome completo"),
@@ -150,6 +151,8 @@ export function ConfiguracoesPage() {
           </Form>
         </CardContent>
       </Card>
+
+      <WhatsappCard />
     </div>
   )
 }

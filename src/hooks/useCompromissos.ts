@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/AuthContext"
 import type { CompromissoFinanceiro, Recorrencia, Status } from "@/types/database"
-import { proximaCompetencia, type Competencia } from "@/lib/competencia"
+import type { Competencia } from "@/lib/competencia"
+import { diaDoMesClamped, recorrentesFaltando } from "@/lib/recorrentes"
 
 const KEY = ["compromissos"]
 
@@ -19,18 +20,9 @@ function competenciaDoVencimento(vencimento: string): string {
   return vencimento.slice(0, 7)
 }
 
-function diaDoMesClamped(vencimento: string, competenciaAlvo: string): string {
-  const diaVencimento = Number(vencimento.split("-")[2])
-  const [ano, mes] = competenciaAlvo.split("-").map(Number)
-  const ultimoDiaDoMes = new Date(ano, mes, 0).getDate()
-  const dia = Math.min(diaVencimento, ultimoDiaDoMes)
-  return `${competenciaAlvo}-${String(dia).padStart(2, "0")}`
-}
-
 /**
  * Garante que toda série recorrente ativa tenha uma linha até `competencia` (inclusive),
- * gerando os meses que faltarem a partir da última linha conhecida de cada série
- * (mesmo `serie_id`), preservando o "dia" de vencimento. Idempotente: só insere o que faltar.
+ * gerando os meses que faltarem. Idempotente: só insere o que faltar.
  */
 async function garantirRecorrentesAteCompetencia(userId: string, competencia: Competencia) {
   const { data, error } = await supabase
@@ -40,42 +32,7 @@ async function garantirRecorrentesAteCompetencia(userId: string, competencia: Co
     .order("competencia", { ascending: true })
   if (error) throw error
 
-  const linhas = data as CompromissoFinanceiro[]
-  // serie_id ainda não existe no banco (migração pendente) — sem ele não dá pra saber com
-  // segurança quais linhas pertencem à mesma série, então não gera nada até a coluna existir
-  // (gerar errado aqui criaria duplicatas).
-  if (linhas.some((c) => !c.serie_id)) return
-
-  const porSerie = new Map<string, CompromissoFinanceiro>()
-  for (const c of linhas) {
-    porSerie.set(c.serie_id, c) // fica com a de maior competência (lista já vem ordenada asc)
-  }
-
-  const novos: Array<Omit<CompromissoFinanceiro, "id" | "created_at">> = []
-  for (const ultima of porSerie.values()) {
-    if (ultima.competencia >= competencia) continue
-
-    let template = ultima
-    let comp = proximaCompetencia(template.competencia)
-    while (comp <= competencia) {
-      const novo = {
-        user_id: userId,
-        categoria_id: template.categoria_id,
-        nome: template.nome,
-        valor: template.valor,
-        vencimento: diaDoMesClamped(template.vencimento, comp),
-        competencia: comp,
-        recorrencia: "recorrente" as const,
-        essencial: template.essencial,
-        serie_id: template.serie_id,
-        status: "pendente" as Status,
-      }
-      novos.push(novo)
-      template = { ...template, ...novo }
-      comp = proximaCompetencia(comp)
-    }
-  }
-
+  const novos = recorrentesFaltando(data as CompromissoFinanceiro[], userId, competencia)
   if (novos.length > 0) {
     const { error: insertError } = await supabase.from("compromissos_financeiros").insert(novos)
     if (insertError) throw insertError
