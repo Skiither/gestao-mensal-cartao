@@ -14,12 +14,14 @@ import { MetasPage } from "@/pages/MetasPage"
 import { PatrimonioPage } from "@/pages/PatrimonioPage"
 import { PerfilPage } from "@/pages/PerfilPage"
 import { ConfiguracoesPage } from "@/pages/ConfiguracoesPage"
+import { PrivacidadePage } from "@/pages/PrivacidadePage"
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<AuthPage />} />
       <Route path="/redefinir-senha" element={<RedefinirSenhaPage />} />
+      <Route path="/privacidade" element={<PrivacidadePage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route path="/onboarding" element={<OnboardingPage />} />
